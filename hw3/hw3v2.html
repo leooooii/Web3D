@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+
+<html>
+
+
+<head>
+<style>
+    
+   /*#container {
+    width: 60vw;
+    height: 60vw;
+    float: left;
+    background-color: yellow;
+    margin: 10px;
+    }*/
+
+    p {
+    margin: 10px;
+    text-align: justify;
+    }
+
+
+</style>
+    <h1 style="font-size:2em; text-align:center; margin:15px"> 
+        Hw3 Exhibtion of Impressionnisme
+        </h1>
+        
+        <hr>
+        
+        <div id="container">
+            <div id="container" style="background:pink; width:55vw; height:60vh; float:left">
+             <canvas id="mycanvas"></canvas>
+        </div>
+
+        <div id="Cameras" style="position:relative;left:10px;background:yellow; width:28vw; height:35vh; float:left;">
+                <canvas id="mycanvas2"></canvas>
+        
+                </div>
+         
+
+  
+                <div id="camera1" onclick="clickCamera1()" style="position:relative;top:10px;left:50px;background:yellow; width:10vw; height:15vh;float:left;overflow:hidden">
+                <canvas id="mycanvas3"></canvas>
+                </div>
+        
+                <div id="camera2" onclick="clickCamera2()" style="position:relative;top:20px;left:50px;background:yellow; width:10vw; height:15vh;overflow:hidden">
+                <canvas id="mycanvas4"></canvas>
+
+                </div>
+                <br>
+             
+                <div id="text" style="position:relative;top:10px; width:100vw; height:20vh;overflow:scroll">
+                <font id='texts' face="monospace" size='3' color='white'>Description</font>
+                <br>
+                <button id="switch">
+                        Switch Scam
+                        </button>
+                    <hr>
+                </div>
+                <hr>
+     
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r78/three.min.js"></script>
+        <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+        
+        <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+</head>
+
+
+
+<script>
+          var keys = [
+            [0, -0.3], [0.2, -0.75], [0.4, -1.2],[0.5,-1.2], [0.7, -0.75], [0.9, -0.3],[1,-0.3]
+            ];   
+            var keys2 = [
+            [0, 1.7], [0.2, 2.15], [0.4,2.6],[0.5,2.6], [0.7, 2.15], [0.9, 1.7],[1,1.7]
+            ];   
+             var T = 4;
+            var clock = new THREE.Clock();
+            var ts = clock.getElapsedTime();
+            var scam11=true;
+            var re=false;
+            $('#switch').click ( function() {
+               scam11=!scam11
+            if(re)  $('#switch').text ('Switch Scam');  
+            else if (scam11 === true) 
+            {
+                $('#switch').text ('Scam1 live');  
+            }
+            else 
+            {
+                $('#switch').text ('Scam2 live');  
+            }
+            });
+         class Lamps{
+                constructor(x, y, z){
+                this.lamp = new THREE.Object3D();  
+                this.body = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 15), new THREE.MeshPhongMaterial(
+                    { 
+                        color:0x000000,
+                    }));
+                this.base =new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 8), new THREE.MeshPhongMaterial(
+                    {
+                        color:0x000000,
+                    }));
+                this.lamp.add(this.body);
+                this.body.add(this.base)
+                this.base.rotation.x=Math.PI/2;
+                this.base.position.z=-7.5;
+                this.body.position.set(100, 5, 0);
+                this.body.rotation.x = Math.PI / 3;
+                this.body.rotation.y = Math.PI;
+                this.lamp.position.set(x, y, z); 
+                scene.add(this.lamp);
+            }
+            }
+
+      class Scams{
+                constructor(x, y, z){
+                this.scam = new THREE.Object3D();  
+                let loader = new THREE.TextureLoader();
+                loader.crossOrigin = '';
+                texture=loader.load('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnCc5BVq1srnLHbOr8VH582F5p87BeLlzbZRv82mPpYTFED7YH');
+                let texture2=loader.load('data:image/jpeg;base64,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');
+                let texture3=loader.load('https://imgur.com/nKBgHaE');
+                var cameraObj = new THREE.Object3D();
+                //cameraObj.add (new THREE.AxisHelper (40))
+                var cameraBody = new THREE.Mesh (new THREE.BoxGeometry (8,6,15), new THREE.MeshLambertMaterial({color:0xC4C4C4,map:texture2}));
+                var lens = new THREE.Mesh (new THREE.CylinderGeometry (3,3,10,15), new THREE.MeshLambertMaterial({color:0xffffff,map:texture}));
+                //var glass =new THREE.Mesh(new THREE.BoxGeometry(10,20,10),new THREE.MeshLambertMaterial({color:0xffffff,map:texture3}));
+                lens.position.z = -5;
+                lens.rotation.x = Math.PI/2;
+                cameraObj.add (cameraBody, lens);
+                this.scam.add (cameraObj);
+                this.scam.position.set(x, y, z); 
+                scene.add(this.scam);
+            }
+            }
+
+            class Chairs{
+                constructor(x, y, z){
+                this.chair = new THREE.Object3D();  
+                let loader = new THREE.TextureLoader();
+                loader.crossOrigin = '';
+                let texture2=loader.load('data:image/jpeg;base64,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');
+                texture=loader.load('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSu69KBXoa71riW9XubvHshzMMvT-UYZt2UoJuVgiJL7puzljay');
+               this.body1 = new THREE.Mesh(new THREE.BoxGeometry(50, 20, 6.5), new THREE.MeshPhongMaterial(
+                    {
+                        map:texture2,
+                    }));
+                    this.body1.castShadow = true;
+                    this.body1.receiveShadow = true;
+                this.body2 = new THREE.Mesh(new THREE.BoxGeometry(50, 20, 6.5), new THREE.MeshPhongMaterial(
+                    {
+                        map:texture2,
+                    }));
+
+                    this.set1 =new THREE.Mesh(new THREE.BoxGeometry(60, 3, 6), new THREE.MeshPhongMaterial(
+                    {
+                        map:texture,
+                    }));
+                    this.set2 =new THREE.Mesh(new THREE.BoxGeometry(60, 3, 6), new THREE.MeshPhongMaterial(
+                    {
+                        map:texture,
+                    }));
+                    this.set3 =new THREE.Mesh(new THREE.BoxGeometry(60, 3, 6), new THREE.MeshPhongMaterial(
+                    {
+                        map:texture,
+                    }));
+                    this.set4 =new THREE.Mesh(new THREE.BoxGeometry(60, 3, 6), new THREE.MeshPhongMaterial(
+                    {
+                        map:texture,
+                    }));
+                    this.set5 =new THREE.Mesh(new THREE.BoxGeometry(60, 3, 6), new THREE.MeshPhongMaterial(
+                    {
+                        map:texture,
+                    }));
+                   
+                    this.body2.castShadow = true;
+                    this.body2.receiveShadow = true;
+                    this.set1.castShadow = true;
+                    this.set1.receiveShadow = true;
+                    this.set2.castShadow = true;
+                    this.set2.receiveShadow = true; 
+                    this.set3.castShadow = true;
+                    this.set3.receiveShadow = true;
+                    this.set4.castShadow = true;
+                    this.set4.receiveShadow = true; 
+                    this.set5.castShadow = true;
+                    this.set5.receiveShadow = true;
+
+                this.chair.add(this.body1,this.body2);
+                this.body1.add(this.set1,this.set2,this.set3,this.set4,this.set5)
+                this.set1.position.set(0,10.5,-10); this.set2.position.set(0,10.5,-1.5); this.set3.position.set(0,10.5,7); this.set4.position.set(0,10.5,14.5);this.set5.position.set(0,10.5,22);
+                this.body1.position.set(0, 10, -5);
+                this.body2.position.set(0, 10, 5);
+                this.chair.position.set(x, y, z); 
+                scene.add(this.chair);
+            }
+            }
+
+        var scene, renderer, camera;
+        var mouse = new THREE.Vector2();
+        var raycaster = new THREE.Raycaster();
+        var pickables = [];
+        var paintview = [];
+        var num;
+        var ispaint=false;
+        init();
+        animate();
+
+        function init() {
+
+        var ww = $('#container').innerWidth();
+        var hh = $('#container').innerHeight();
+        var cc = document.getElementById('mycanvas');
+        renderer = new THREE.WebGLRenderer({
+           canvas:cc
+          // antialias: true
+        });
+
+        var ww1 = $('#Cameras').innerWidth();
+        var hh1 = $('#Cameras').innerHeight();
+        var cc1 = document.getElementById('mycanvas2');
+        rendererCams = new THREE.WebGLRenderer({
+            canvas: cc1
+        });
+
+        var ww2 = $('#camera1').innerWidth();
+        var hh2 = $('#camera1').innerHeight();
+        var cc2 = document.getElementById('mycanvas3');
+        renderer2 = new THREE.WebGLRenderer({
+            canvas: cc2
+        });
+
+        var ww3 = $('#camera2').innerWidth();
+        var hh3 = $('#camera2').innerHeight();
+        var cc3 = document.getElementById('mycanvas4');
+        renderer3 = new THREE.WebGLRenderer({
+            canvas: cc3
+        });
+
+        renderer.setSize(ww, hh);
+        rendererCams.setSize(ww1, hh1);
+        renderer2.setSize(ww2, hh2);
+        renderer3.setSize(ww3, hh3);
+        renderer.setClearColor(0x555555);
+
+        scene = new THREE.Scene();
+
+        camera = new THREE.PerspectiveCamera(45, ww / hh, 1, 10000);
+        camera.position.x = 0;
+        camera.position.y = 80;
+        camera.position.z = 650;
+
+        let controls = new THREE.OrbitControls(camera, renderer.domElement);
+        
+        window.addEventListener('resize', onWindowResize, false);
+        //$('#container').on ("mousemove", onDocumentMouseMove);
+        window.addEventListener('mousedown', onDocumentMouseDown, false);
+            //////////////////////////////////////
+        let loader = new THREE.TextureLoader();
+        loader.crossOrigin = '';
+        texture = loader.load('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS9RH3BtGIWwaZ12B4yR5ccyQKejIuTNqbNlUWnk3BkSUl2qt0R');
+        texture.repeat.set (3,3);
+        texture.wrapS = texture.wrapT = true;
+        let floor = new THREE.Mesh(new THREE.PlaneGeometry(850, 400), new THREE.MeshPhongMaterial({
+            side: THREE.DoubleSide,
+            map: texture,
+        }))
+        scene.add(floor)
+        floor.receiveShadow = true;
+        floor.rotation.x = -Math.PI / 2
+        light = new THREE.PointLight(0xffffff, 1.2);
+        light.position.set(0, 800, 0);
+        scene.add(light);
+        let texture2 = loader.load('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRz0FpiMIWt_myA6LkofTBdeFcscTIECllnrrTgrJE_u5PmAUHZ')
+             var wall1 = new THREE.Mesh(new THREE.BoxGeometry(850, 90,15), new THREE.MeshPhongMaterial({
+                side: THREE.DoubleSide,
+                map:texture2,
+            }))
+            wall1.position.set(0,45,-190);
+            var wall2 = new THREE.Mesh(new THREE.BoxGeometry(850, 90,15), new THREE.MeshPhongMaterial({
+                side: THREE.DoubleSide,
+                map:texture2,
+            }))
+            wall2.position.set(0,45,190);
+            var wall3 = new THREE.Mesh(new THREE.BoxGeometry(850, 90,15), new THREE.MeshPhongMaterial({
+                map:texture2,
+                side: THREE.DoubleSide,
+            }))
+            wall3.position.set(0,45,190);
+            var wall3 = new THREE.Mesh(new THREE.BoxGeometry(15, 90,395), new THREE.MeshPhongMaterial({
+                map:texture2,
+                side: THREE.DoubleSide,
+            }))
+            wall3.position.set(-418,45,0);
+            var wall4 = new THREE.Mesh(new THREE.BoxGeometry(15, 90,80), new THREE.MeshPhongMaterial({
+                map:texture2,
+                side: THREE.DoubleSide,
+            }))
+            wall4.position.set(-150,45,-150);
+            var wall5 = new THREE.Mesh(new THREE.BoxGeometry(15, 90,80), new THREE.MeshPhongMaterial({
+                map:texture2,
+                side: THREE.DoubleSide,
+            }))
+            wall5.position.set(-150,45,150);
+            var wall6 = new THREE.Mesh(new THREE.BoxGeometry(15, 90,40), new THREE.MeshPhongMaterial({
+                map:texture2,
+                side: THREE.DoubleSide,
+            }))
+            wall6.position.set(418,45,177.5);
+            var wall7 = new THREE.Mesh(new THREE.BoxGeometry(15, 90,300), new THREE.MeshPhongMaterial({
+                map:texture2,
+                side: THREE.DoubleSide,
+            }))
+            wall7.position.set(418,45,-47.5);
+            scene.add(wall1,wall2,wall3,wall4,wall5,wall6,wall7);
+            scam1=new Scams(-408,95,177.5);
+            scam1.scam.rotation.y = -Math.PI/2; 
+            scam1.scam.rotation.x = -Math.PI/9;
+            scam1.scam.rotation.order = 'YXZ'
+         
+            scam2=new Scams(408,95,-177.5);
+            scam2.scam.rotation.y = Math.PI/2; 
+            scam2.scam.rotation.x = -Math.PI/9;
+            scam2.scam.rotation.order = 'YXZ'
+
+            var lamp1=new Lamps(-100,90,-40);
+            lamp1.lamp.rotation.z=Math.PI;
+            lamp1.lamp.rotation.y=Math.PI;
+            var lamp2=new Lamps(160,90,-40);
+            lamp2.lamp.rotation.z=Math.PI;
+            lamp2.lamp.rotation.y=Math.PI;
+            var lamp3=new Lamps(100,90,40);
+            lamp3.lamp.rotation.z=Math.PI;
+            var lamp4=new Lamps(360,90,40);
+            lamp4.lamp.rotation.z=Math.PI;
+            var lamp5=new Lamps(-300,90,-100);
+            lamp5.lamp.rotation.y=Math.PI/2;
+            lamp5.lamp.rotation.z=Math.PI;
+            lamp5.lamp.rotation.z=Math.PI;
+            lamp5.body.rotation.x = Math.PI/2+0.5 ;
+            
+            var track1=new THREE.Mesh(new THREE.BoxGeometry(4, 4,100), new THREE.MeshPhongMaterial({
+                transparent:true, 
+                opacity :0.5,
+            }))
+            var track2=new THREE.Mesh(new THREE.BoxGeometry(562.5, 4,4), new THREE.MeshPhongMaterial({
+                transparent:true, 
+                opacity :0.5,
+            }))
+            var track3=new THREE.Mesh(new THREE.BoxGeometry(4, 4,100), new THREE.MeshPhongMaterial({
+                transparent:true, 
+                opacity :0.5,
+            }))
+            var track4=new THREE.Mesh(new THREE.BoxGeometry(562.5, 4,4), new THREE.MeshPhongMaterial({
+                transparent:true, 
+                opacity :0.5,
+            }))
+            track1.position.set(-305,95,0);
+            track2.position.set(-21.5,95,45);
+            track3.position.set(260,95,0);
+            track4.position.set(-21.5,95,-45);
+            scene.add(track1,track2,track3,track4);
+            var chair1=new Chairs(0,0,-120);
+            var chair2=new Chairs(260,0,-120);
+            var chair3=new Chairs(0,0,120);
+            var chair4=new Chairs(260,0,120);
+            var chair5=new Chairs(-340,0,0);
+            chair5.chair.rotation.y=Math.PI/2;
+            scene.add(chair1,chair2,chair3,chair4,chair5);
+
+            
+            ssCam = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+            ssCam2 = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+            spotLight1 = new THREE.SpotLight(0xffffff);
+            spotLight1.position.set ( 0, 250, 50 );
+            spotLight1.angle = 0.25;
+            spotLight1.penumbra = 0.2;
+            spotLight1.decay = 1;
+            captain = new THREE.Mesh (new THREE.SphereGeometry(5,20,20), new THREE.MeshBasicMaterial({color:'red'}));
+            scene.add (captain);
+            captain.material.visible = false;
+            captain.position.set (0,70, -120);
+            spotLight1.target = captain;
+            spotLight1.castShadow = true;
+            spotLight1.shadow.mapSize.width = 256;
+            spotLight1.shadow.mapSize.height = 256;
+            spotLight1.shadow.camera.near = 10;
+            spotLight1.shadow.camera.far = 200;
+            spotLight1.shadow.camera.fov = light.angle / Math.PI * 180 * 2;
+
+            spotLight2 = new THREE.SpotLight(0xffffff);
+            spotLight2.position.set ( 260, 250, 50 );
+            spotLight2.angle = 0.25;
+            spotLight2.penumbra = 0.2;
+            spotLight2.decay = 1;
+            captain2 = new THREE.Mesh (new THREE.SphereGeometry(5,20,20), new THREE.MeshBasicMaterial({color:'red'}));
+            scene.add (captain2);
+            captain2.material.visible = false;
+            captain2.position.set (260,70, -120);
+            spotLight2.target = captain2;
+            spotLight2.castShadow = true;
+            spotLight2.shadow.mapSize.width = 256;
+            spotLight2.shadow.mapSize.height = 256;
+            spotLight2.shadow.camera.near = 10;
+            spotLight2.shadow.camera.far = 200;
+            spotLight2.shadow.camera.fov = light.angle / Math.PI * 180 * 2;
+
+            spotLight3 = new THREE.SpotLight(0xffffff);
+            spotLight3.position.set ( 0, 250, -50 );
+            spotLight3.angle = 0.25;
+            spotLight3.penumbra = 0.2;
+            spotLight3.decay = 1;
+            captain3 = new THREE.Mesh (new THREE.SphereGeometry(5,20,20), new THREE.MeshBasicMaterial({color:'red'}));
+            scene.add (captain3);
+            captain3.material.visible = false; 
+            captain3.position.set (0,70, 120);
+            spotLight3.target = captain3;
+            spotLight3.castShadow = true;
+            spotLight3.shadow.mapSize.width = 256;
+            spotLight3.shadow.mapSize.height = 256;
+            spotLight3.shadow.camera.near = 10;
+            spotLight3.shadow.camera.far = 200;
+            spotLight3.shadow.camera.fov = light.angle / Math.PI * 180 * 2;
+
+            spotLight4 = new THREE.SpotLight(0xffffff);
+            spotLight4.position.set ( 260, 250, -50 );
+            spotLight4.angle = -0.25;
+            spotLight4.penumbra = 0.2;
+            spotLight4.decay = 1;
+            captain4 = new THREE.Mesh (new THREE.SphereGeometry(5,20,20), new THREE.MeshBasicMaterial({color:'red'}));
+            scene.add (captain4);
+            captain4.material.visible = false;
+            captain4.position.set (260,70, 120);
+            spotLight4.target = captain4;
+            spotLight4.castShadow = true;
+            spotLight4.shadow.mapSize.width = 256;
+            spotLight4.shadow.mapSize.height = 256;
+            spotLight4.shadow.camera.near = 10;
+            spotLight4.shadow.camera.far = 200;
+            spotLight4.shadow.camera.fov = light.angle / Math.PI * 180 * 2;
+
+            spotLight5 = new THREE.SpotLight(0xffffff);
+            spotLight5.position.set ( -200, 250, -6 );
+            spotLight5.angle = -0.25;
+            spotLight5.penumbra = 0.2;
+            spotLight5.decay = 1;
+            captain5 = new THREE.Mesh (new THREE.SphereGeometry(5,20,20), new THREE.MeshBasicMaterial({color:'red'}));
+            scene.add (captain5);
+            captain5.material.visible = false;
+            captain5.position.set (-350,70, 0);
+            spotLight5.target = captain5;
+            spotLight5.castShadow = true;
+            spotLight5.shadow.mapSize.width = 256;
+            spotLight5.shadow.mapSize.height = 256;
+            spotLight5.shadow.camera.near = 10;
+            spotLight5.shadow.camera.far = 200;
+            spotLight5.shadow.camera.fov = light.angle / Math.PI * 180 * 2;
+            spotLightHelper = new THREE.SpotLightHelper (spotLight5);
+            //scene.add(spotLightHelper);
+
+
+            scene.add (spotLight1,spotLight2,spotLight3,spotLight4,spotLight5);
+////////////////////////////////////////////////////////////////////////
+
+        let tex = loader.load ("https://i.imgur.com/m5x36vY.jpg");
+
+        let painting = new THREE.Mesh (new THREE.PlaneGeometry(90,60), new THREE.MeshPhongMaterial({map: tex}));
+        painting.position.set(260,50,-180);
+        painting.name = '睡蓮莫奈';
+
+        let tex2 = loader.load ("https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Claude_Monet%2C_Impression%2C_soleil_levant.jpg/1200px-Claude_Monet%2C_Impression%2C_soleil_levant.jpg");
+        let painting2 = new THREE.Mesh (new THREE.PlaneGeometry(90,60), new THREE.MeshPhongMaterial({map: tex2}));
+        painting2.position.set(0,50,-180);
+        painting2.name = '印象日出莫奈';
+
+        let tex3=loader.load("https://i.imgur.com/a7VYeY6.jpg");
+        let painting3 = new THREE.Mesh (new THREE.PlaneGeometry(90,60), new THREE.MeshPhongMaterial({map: tex3}));
+        painting3.position.set(260,50,180);
+        painting3.rotation.x=-Math.PI;
+        painting3.rotation.z=Math.PI;
+        painting3.name = '有烏鴉的麥田';
+
+        let tex4=loader.load("https://i.imgur.com/AitUCPE.jpg");
+        let painting4 = new THREE.Mesh (new THREE.PlaneGeometry(90,60), new THREE.MeshPhongMaterial({map: tex4}));
+        painting4.position.set(0,50,180);
+        painting4.rotation.x=Math.PI;
+        painting4.rotation.z=Math.PI;
+        painting4.name = '向日葵';
+        
+        let tex5=loader.load("https://i.imgur.com/95dP3WW.jpg");
+        let painting5 = new THREE.Mesh (new THREE.PlaneGeometry(90,60), new THREE.MeshPhongMaterial({map: tex5}));
+        painting5.position.set(-400,50,0);
+        painting5.rotation.y=Math.PI/2;
+        //painting5.rotation.z=Math.PI;
+        painting5.name = '红磨坊街的露天舞会';
+        
+        scene.add (painting,painting2,painting3,painting4,painting5);
+        pickables.push (painting, painting2,painting3,painting4,painting5);
+
+        paintview[0] = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+        paintview[0].position.set(0,50, -100);
+        paintview[1] = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+        paintview[1].position.set(260,50, -100);
+
+        paintview[2] = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+        paintview[2].position.set(0,50, 100);
+        paintview[2].rotation.y=Math.PI;
+        paintview[3] = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+        paintview[3].position.set(260,50, 100);
+        paintview[3].rotation.y=Math.PI;
+        paintview[4] = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+        paintview[4].position.set(-330,50, 0);
+        paintview[4].rotation.y=Math.PI/2;
+
+
+        }
+
+        function onWindowResize() {
+        var ww = $('#container').innerWidth();
+        var hh = $('#container').innerHeight();
+        camera.aspect = ww / hh;
+        camera.updateProjectionMatrix();
+        renderer.setSize(ww, hh);
+        }
+
+        function onDocumentMouseDown(event) {
+
+        
+        var viewportPos =$('#container').get(0).getBoundingClientRect(); 
+        mouse.x = ((event.clientX - viewportPos.left) / $('#container').innerWidth()) * 2 - 1;
+        mouse.y = -((event.clientY - viewportPos.top) / $('#container').innerHeight()) * 2 + 1;
+
+       raycaster.setFromCamera(mouse, camera);
+        var intersects = raycaster.intersectObjects (pickables);
+        if (intersects.length > 0) {
+            //cyl.position.copy(intersects[0].point);
+            if (intersects[0].object.name == "睡蓮莫奈"){
+                num=1;
+                ispaint=!ispaint;
+                if(ispaint==true)
+                $('#texts').text ("《睡蓮》（法語：Les Nymphéas 發音：[nɛ̃.fe.a]）是法國印象派畫家莫奈所繪的系列油畫作品，總共約有250幅。這組繪畫作品主要描繪的是莫奈在吉維尼花園中的睡蓮，創作花費了莫奈晚年的大部分時光，且繪成於莫奈罹患白內障時期。首批作品於1909年5月於巴黎丟朗－呂厄的畫廊中展示。《睡蓮》組畫是莫奈晚年作品的一個成熟系列，也更進一步成就了他印象派大師的名號。1883年，時年四十多歲的莫奈在妻子離世後，搬到了巴黎郊區一個寧靜的小鎮吉維尼，以畫為生。七年後，他從長期購買他作品的畫商保羅那裡得到了一筆錢，他買下了房屋和庭院後，開始打理他的花園，並挖了一個人工池塘，種下了一池睡蓮。起初只是觀賞睡蓮，後來他漸漸產生了創作的衝動——「池裡的精靈浮現在我眼前，我舉起了調色板」，就這樣一幅幅睡蓮畫作誕生了，睡蓮成了他晚年繪畫的主題。如今這些睡蓮畫作散落在世界上千個大美術館、博物館，流到市場上的作品也被各國收藏家爭相購買珍藏");  
+                else $('#texts').text ("Click painting to enjoy, double click to return");
+            }
+            if (intersects[0].object.name == "印象日出莫奈"){
+                ispaint=!ispaint;
+                num=0;
+                if(ispaint==true)
+                $('#texts').text ("印象‧日出（法文：Impression, soleil levant）是法國畫家克勞德·莫內的著名畫作，繪製的是故鄉勒阿弗爾的景色，路易·樂華（Louis Leroy）根據這幅畫提出了「印象派」稱呼。現在存放在巴黎的瑪摩丹美術館內。1872年莫奈回到故鄉勒阿弗爾，繪製了六幅描繪勒阿弗爾港的作品，分別描繪不同時間段的勒阿弗爾港口景色，《印象·日出》為其中一幅。");
+                else $('#texts').text ("Click painting to enjoy, double click to return");
+            }
+            if (intersects[0].object.name == "有烏鴉的麥田"){
+                ispaint=!ispaint;
+                num=3;
+                if(ispaint==true)
+                $('#texts').text ("《麥田群鴉》，或譯有烏鴉的麥田、烏鴉群飛的麥田、麥田裡的烏鴉，是荷蘭後印象派畫家文生·梵谷創作於1890年7月的一幅油畫。這幅畫以黑暗的天空和通往不同方向的三條路表達了梵谷精神上的困擾，黑色烏鴉預示著死亡。有時這被當做梵谷在1890年7月29日自殺前繪製的最後一幅畫。但實際上其創作日期應該是7月10日左右，後來他還繪製了《杜比尼花園》等作品");
+                else $('#texts').text ("Click painting to enjoy, double click to return");
+            }
+            if (intersects[0].object.name == "向日葵"){
+                ispaint=!ispaint;
+                num=2;
+                if(ispaint==true)
+                $('#texts').text ("《向日葵》是荷蘭畫家梵谷繪畫的一系列靜物油畫。當中有2幅繪有15朵向日葵，與1幅繪有十四朵向日葵，另有兩幅繪有12朵向日葵。畫家1888年8月在法國南部阿爾勒繪畫了第一幅15朵的《向日葵》（藏於英國倫敦英國國家美術館）和第一幅12朵的《向日葵》（藏於德國慕尼黑新美術館），其餘的作品在翌年1月繪成。全部作品都畫在93 × 72 公分（37 × 28）的帆布上。1887年他另外在巴黎繪畫了一套四幅的向日葵靜物畫。");
+                else $('#texts').text ("Click painting to enjoy, double click to return");
+            } 
+            if (intersects[0].object.name == "红磨坊街的露天舞会"){
+                num=4;
+                ispaint=!ispaint;
+                if(ispaint==true)
+                $('#texts').text ("煎餅磨坊的舞會（法文：Le Bal au Moulin de la Galette）是知名的法國前期印象派畫家皮耶-奧古斯特·雷諾瓦 在1876年的作品之一。目前收藏在法國巴黎的奧塞美術館內。十九世紀法國畫家雷諾瓦以較樂觀的主題表現在這幅作品上，光線透過樹蔭，照射在人體身上，呈現斑駁情況。描繪出色彩閃動在光點裡，完全捕捉到光線落在景物上時，所創造出來的籠統瞬間印象。人物在樹蔭下，光線透過樹蔭照在他們的衣服、臉上，有印象派的輕快的構圖。前景到後景變化很快，後景有往高處發展的呈現，表現出人形逐漸消融在陽光和空氣中。");
+                else $('#texts').text ("Click painting to enjoy, double click to return");
+            }
+        }
+        }
+         function keyframe(t) {
+            var s = ((t - ts) % T) / T;
+            for (var i = 1; i < keys.length; i++) {
+                if (keys[i][0] > s) break;
+            }
+            var ii = i - 1;
+            var a = (s - keys[ii][0]) / (keys[ii + 1][0] - keys[ii][0]);
+            intKey = keys[ii][1] * (1 - a) + keys[ii + 1][1] * a;
+            return intKey;
+            }
+
+            function keyframe2(t) {
+            var s = ((t - ts) % T) / T;
+            for (var i = 1; i < keys2.length; i++) {
+                if (keys2[i][0] > s) break;
+            }
+            var ii = i - 1;
+            var a = (s - keys2[ii][0]) / (keys2[ii + 1][0] - keys2[ii][0]);
+            intKey = keys2[ii][1] * (1 - a) + keys2[ii + 1][1] * a;
+            return intKey;
+            }
+
+        function animate() {
+        //controls.update();
+        let intkey = keyframe(clock.getElapsedTime());
+        let intkey2 = keyframe2(clock.getElapsedTime());
+        scam1.scam.rotation.y = intkey;
+        scam2.scam.rotation.y = intkey2;
+
+        ssCam.matrixWorld.copy (scam1.scam.matrixWorld);
+        ssCam.matrixAutoUpdate = false;
+        ssCam2.matrixWorld.copy (scam2.scam.matrixWorld);
+        ssCam2.matrixAutoUpdate = false;
+
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+
+        renderer2.render(scene, ssCam);
+        renderer3.render(scene,ssCam2);
+        if(ispaint==true)
+        rendererCams.render(scene, paintview[num]);
+        else if(scam11)  rendererCams.render(scene, ssCam);
+        else rendererCams.render(scene, ssCam2);
+        }
+        function render() {
+        renderer.render(scene, camera);
+        }
+
+
+ 
+
+
+</script>
+</body>
+
+</html>

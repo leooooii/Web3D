@@ -1,0 +1,228 @@
+
+	<!DOCTYPE html>
+
+	<html>
+
+	<head>
+	<style>
+		#info {
+			position: absolute;
+			top: 100px; width: 100%;
+			color: #ffffff;
+			text-align: center;
+		}
+		#deviceInfo {
+			position: absolute;
+			bottom: 100px; width: 100%;
+			color: #ffffff;
+			text-align: center;
+		}
+
+	</style>
+	</head>
+
+	<body> 
+	<div id='info'> Hw6 </div>
+	<div id='deviceInfo'></div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+	<script>
+	// new contact problem:
+	// static XZ plane
+	// moving gravity vector (subject to deviceOrientation)
+	// add shadow map
+	// add border first ....
+	//
+
+	var camera, scene, renderer, light;
+	var ball, plane;
+	var clock = new THREE.Clock();
+	var mouse = new THREE.Vector2();
+	var gravity = new THREE.Vector3();
+	var deviceInfo, gamma = 0, beta = 0;
+
+	// class definitions here
+	var Ball = function () { 
+		// properties
+		this.pos = new THREE.Vector3(0, 0, 0);
+		this.vel = new THREE.Vector3();
+		this.force = new THREE.Vector3();
+		this.mesh = new THREE.Mesh(new THREE.SphereGeometry(10, 32, 32), new THREE.MeshPhongMaterial({
+			color: 0xff1234,
+			specular: 0x444444,
+			shininess: 80
+		}));
+		scene.add(this.mesh);
+
+		// methods
+		this.update = function (dt) {
+			this.vel.add(this.force.clone().multiplyScalar(dt));
+			this.pos.add(this.vel.clone().multiplyScalar(dt));
+			this.mesh.position.copy(this.pos);
+		
+			// border check
+			if (this.pos.x > 90) {
+				this.pos.setX (90);
+				this.vel.setX (0);
+			} else if (this.pos.x < -90) {
+				this.pos.setX (-90);
+				this.vel.setX (0);
+			}
+			if (this.pos.z > 90) {
+				this.pos.setZ (90);
+				this.vel.setZ (0);
+			} 
+	       /*if(this.pos.x>-8)
+			{
+		       this.pos.setX(-15);
+			   this.vel.setX(0);
+			}
+			if(this.pos.x<8)
+			{
+		       this.pos.setX(15);
+			   this.vel.setX(0);
+			}*/
+			
+	
+			else if (this.pos.z < -90) {
+				this.pos.setZ (-90);
+				this.vel.setZ (0);
+			}
+			
+			
+		}
+	}
+
+	var Plane = function () {
+		// properties
+		this.pos = new THREE.Vector3(0, 10, 0); // object frame
+		this.normal = new THREE.Vector3(0, 1, 0); // object frame
+	    let loader = new THREE.TextureLoader();
+		loader.crossOrigin = '';
+		texture = loader.load('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS9RH3BtGIWwaZ12B4yR5ccyQKejIuTNqbNlUWnk3BkSUl2qt0R');
+		texture1 = loader.load('http://canhotopazelite.info/wp-content/uploads/2018/02/office-floor-texture-with-office-carpet-floor-carpet-office-floor-glitzburgh-co-floor-photo.jpg');
+		texture.repeat.set (3,3);
+		texture.wrapS = texture.wrapT = true;
+		this.mesh = new THREE.Mesh(new THREE.BoxGeometry(200, 1, 200), new THREE.MeshLambertMaterial({
+                map: texture,
+		}));
+		this.wall1=new THREE.Mesh(new THREE.BoxGeometry(10, 1, 70), new THREE.MeshLambertMaterial({
+                map: texture1,
+		}));
+		scene.add(this.mesh,this.wall1);
+        this.mesh.position.y=-11;
+		this.wall1.position.y=-10.5;this.wall1.position.z=65;
+		// methods
+		this.isPointOut = function (point) {
+			// considering plane transformation
+			var posW = this.pos.clone(); // in world frame
+			var normalW = this.normal.clone();
+			posW.applyMatrix4(this.mesh.matrixWorld);
+			var tt = new THREE.Matrix4();
+			normalW.applyMatrix4(tt.getInverse(this.mesh.matrixWorld).transpose());
+
+			return true; // for infinite plane
+			// for contact problem, this should check whether the ball
+			// rolls out of boundary
+		}
+	};
+
+
+	init();
+	animate();
+    var wall;
+
+	function init() {
+
+		// assume the plane is XZ plane
+		// with normal = (0,1,0)
+		scene = new THREE.Scene();
+
+		camera = new THREE.OrthographicCamera(-110, 110, 110, -110, 10, 2000);
+		camera.position.set(0, 450, 0);
+		camera.up.set(0, 0, -1);
+		camera.lookAt(new THREE.Vector3(0, 0, 0));
+		scene.add(camera);
+
+		ball = new Ball();
+
+		light = new THREE.PointLight(0xffffff);
+		light.position.set(0, 300, 0);
+		scene.add(light);
+    
+		renderer = new THREE.WebGLRenderer();
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.setClearColor(0x888888);
+
+		var gridXZ = new THREE.GridHelper(200, 10, 'red', 'white');
+		scene.add(gridXZ);
+		scene.add (new THREE.AxisHelper (30))
+		
+        wall=new Plane();
+		//wall.rotation.x=Math.PI/2;
+		
+		document.body.appendChild(renderer.domElement);
+		window.addEventListener('resize', onWindowResize, false);
+	//    document.addEventListener('mousemove', onDocumentMouseMove, false);
+		deviceInfo = document.getElementById('deviceInfo');
+
+		window.addEventListener('deviceorientation', function(e) {
+			gamma = e.gamma;
+			beta = e.beta;
+			console.log (gamma +', ' + beta + ', ' + e.alpha);
+		});
+		
+	}
+
+	/*
+	function onDocumentMouseMove(event) {
+		event.preventDefault();
+		mouse.x = (event.clientX / window.innerWidth) * 2 - 1; // [-1,1]
+		mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+		// active gamma & beta: [-90,90]
+		gamma = mouse.x*90;
+		beta = -mouse.y*90;
+
+		//console.log (gamma + ', ' + beta);
+		// mouse.x is gamma (rotation about Y)
+	}
+	*/
+
+	function onWindowResize() {
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize(window.innerWidth, window.innerHeight);
+	}
+
+	function Contact(ball, plane) {
+
+		ball.pos.setY(0); // ball position correction
+		let normalW = new THREE.Vector3(0, 1, 0); // local plane normal
+		ball.force.copy (gravity.projectOnPlane (normalW));
+	}
+
+
+	function animate() {
+		deviceInfo.innerHTML = '[gamma: ' + gamma.toFixed(2) + '], [beta: ' 
+			+ beta.toFixed(2) +']';
+
+		// euler: in radian
+		// gamma/beta: in degree
+		// device beta (DeviceX) correspond to world X
+		// device gamma (DeviceY) correspond to world -Z
+		var a = new THREE.Euler(-beta*Math.PI/180, 0, gamma*Math.PI/180, 'XYZ');
+		gravity = new THREE.Vector3(0, -180, 0);
+		gravity.applyEuler(a);
+		 
+		Contact(ball, plane);
+		
+		let dt = clock.getDelta();
+		ball.update(dt);
+
+		requestAnimationFrame(animate);
+		renderer.render(scene, camera);
+	}
+	</script>
+	</body>
+
+	</html>

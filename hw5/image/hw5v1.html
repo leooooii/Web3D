@@ -1,0 +1,530 @@
+	<!DOCTYPE html>
+
+	<html>
+
+
+	<head>
+	<style>
+		
+	</style>
+	<hr>
+	<h1 style="text-align:center"> Hw5</h1>
+
+	<hr>
+
+	<div id="containerL" style="background-color:yellow;float:left; margin:3px; width:20vw; height:20vw">
+		<canvas id='mirrorLView'></canvas>
+	  </div>
+	  <p id='start' style='position:absolute;left:47vw;top:15vh;font-size:50px;color:white;'>3</p>
+	<div id="container" style="float:left; margin:3px; width:55vw; height:45vw">
+	</div>
+
+	<div id="containerR" style="background-color:pink;float:left; margin:3px; width:20vw; height:20vw">
+		<canvas id='mirrorRView'></canvas>
+	  </div>
+	  
+	  	<div id="fuelboard">
+	  <img src="https://imgur.com/SWjUTZw.png" style="position:absolute;top:35vw;left:2vw;width:18vw;height:20vw;z-index:0">
+	  </div>
+	  
+	  
+	  
+	  <div id="speedboard">
+	  <img src="https://imgur.com/k5VrbBu.png" style="position:absolute;top:35vw;left:77.5vw;width:18vw;height:20vw;z-index:1">
+	  </div>
+	  
+	<div style="float:left; margin-left: 21.1vw; width:54vw;">
+	  <button id="stepB" style="width:100%">Step</button>
+	  <p id="fuel">
+	  </p>
+	  <p id='hud' style='position:absolute;bottom:5%;left:35%;color:white'></p>
+	</div>
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
+	<script src="https://threejs.org/examples/js/controls/OrbitControls.js">
+
+
+	</script>
+	<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+	<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/MTLLoader.js"></script>
+	<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/OBJLoader.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+	<script>
+	
+	var camera, scene, renderer;
+	var omega, theta, R;
+	var clock = new THREE.Clock();
+	var keyboard;
+	var fuel;
+	var engine = true;
+	var engines=[true,true];
+	var cameraB, rendererB,cameraRTT;
+	var cameraC, rendererC,cameraR;
+	var renderTarget,renderTargetR;
+	var cameraHUD2, sceneHUD;
+	var theObject,theObject2;
+	var socket;
+	var isStep = [false, false];
+	var myID,otherID;
+	var meshes = []; 
+	var cars=[];
+	var omegas=[0,0],thetas=[0,0],Rs=[70,56],fuels=[200,200];
+	var step = false;
+	var judge=true;
+	var players;
+	/*$('#stepB').click ( function() {
+	  socket.emit ('toggle', myID);	
+	});*/
+
+	$("#stepB").on('mousedown', function(e) {
+	console.log('mouse down')
+	if(isStep[myID]==false){socket.emit ('toggle', myID);}
+	$(this).css("background-color", "yellow");
+	}).on('mouseup', function(e) {
+	console.log('mouse up')
+	if(isStep[myID]==true){socket.emit ('toggle', myID);}
+	$(this).css("background-color", "white");
+	});
+
+
+	$(function () {
+	socket = io();
+
+	socket.on ('id_set', function(msg) {
+	console.log ('i am ' + msg);
+
+	// setting myID in this client
+	myID = msg;
+	if (myID === 0)
+	otherID = 1;
+	else
+	otherID = 0;  
+
+	if (myID === 0) {
+	$('#hud').text ('I am dirver 0')
+	} else {
+	$('#hud').text ('I am driver 1')
+	}
+
+	});
+
+	socket.on ('update_status', function (status) {
+	//console.log (status)
+	players=status.length;
+	for (let i = 0; i < status.length; i++) {
+	meshes[status[i].id].material.visible = true;
+	//scene.add(models[status[i].id]);
+	isStep[status[i].id] = status[i].turn;
+	}
+
+	});
+
+
+
+	});
+
+
+	init();
+	animate();
+
+	function init() {
+
+	var ww = $("#container").innerWidth();
+	var hh = $("#container").innerHeight();
+	renderer = new THREE.WebGLRenderer();
+	renderer.setSize(ww, hh);
+	renderer.setClearColor(0x888888);
+	$("#container").append(renderer.domElement);
+
+	////////////////////////////////////////////////
+	var wwB = $('#containerL').innerWidth();
+	var hhB = $('#containerL').innerHeight();
+	var mv = document.getElementById('mirrorLView');
+	rendererB = new THREE.WebGLRenderer({
+	canvas: mv
+	});
+	rendererB.setSize(wwB, hhB);
+	rendererB.setClearColor(0x888888);
+	renderTarget = new THREE.WebGLRenderTarget(
+	1024, 1024, {
+	minFilter: THREE.LinearFilter,
+	magFilter: THREE.NearestFilter,
+	format: THREE.RGBFormat
+	}
+	);
+	/////////////////////////////leftmirror
+	var wwwB = $('#containerR').innerWidth();
+	var hhhB = $('#containerR').innerHeight();
+	var mmv = document.getElementById('mirrorRView');
+	rendererC = new THREE.WebGLRenderer({
+	canvas: mmv
+	});
+	rendererC.setSize(wwwB, hhhB);
+	rendererC.setClearColor(0x888888);
+	renderTargetR = new THREE.WebGLRenderTarget(
+	1024, 1024, {
+	minFilter: THREE.LinearFilter,
+	magFilter: THREE.NearestFilter,
+	format: THREE.RGBFormat
+	}
+	);
+	///////////////////////////rightmirror
+    
+
+	scene = new THREE.Scene();
+	camera = new THREE.PerspectiveCamera(50, ww / hh, 1, 1000);
+	camera.position.set(0, 200, 300);
+
+	cameraB = new THREE.PerspectiveCamera(90, wwB / hhhB, 1, 1000);
+	sceneRTT = new THREE.Scene();
+	cameraRTT = new THREE.OrthographicCamera (-10,10,10,-10, 0,20);
+	/////////////////////////////////////////leftmirror
+
+	cameraC = new THREE.PerspectiveCamera(90, wwwB / hhhB, 1, 1000);
+	sceneR = new THREE.Scene();
+	cameraR = new THREE.OrthographicCamera (-10,10,10,-10, 0,20);
+	///////////////////////rightmirror
+
+	meshes[0] = new THREE.Mesh(new THREE.BoxGeometry(5, 5,10), new THREE.MeshPhongMaterial({color:'red'}));
+	scene.add(meshes[0]);
+	meshes[1] = new THREE.Mesh(new THREE.BoxGeometry(5, 5,10), new THREE.MeshPhongMaterial({color:'white'}));
+	scene.add(meshes[1]);
+	meshes[0].material.visible = false
+	meshes[1].material.visible = false
+
+	let loader = new THREE.TextureLoader();
+			loader.crossOrigin = '';
+			texture = loader.load('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS9RH3BtGIWwaZ12B4yR5ccyQKejIuTNqbNlUWnk3BkSUl2qt0R');
+			texture.repeat.set (5,5);
+			texture.wrapS = texture.wrapT = true;
+			let floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshPhongMaterial({
+				side: THREE.DoubleSide,
+				map: texture,
+			}))
+			scene.add(floor)
+			floor.rotation.x=Math.PI/2;
+	plane = new THREE.Mesh (new THREE.PlaneGeometry(20,20),
+	new THREE.MeshBasicMaterial({map:renderTarget.texture, side:THREE.DoubleSide}));
+	sceneRTT.add (plane);
+	plane.rotation.y = Math.PI;
+
+	planeR = new THREE.Mesh (new THREE.PlaneGeometry(20,20),
+	new THREE.MeshBasicMaterial({map:renderTargetR.texture, side:THREE.DoubleSide}));
+	sceneR.add (planeR);
+	planeR.rotation.y = Math.PI;
+
+	var gridXZ = new THREE.GridHelper(200, 20, 'red', 'white');
+	//scene.add(gridXZ);
+
+	let controls = new THREE.OrbitControls(camera, renderer.domElement);
+	window.addEventListener('resize', onWindowResize, false);
+	/////////////
+	theta = 0;
+	omega = 0;
+	R = 70;
+	fuel = 100;
+
+	let geometry = new THREE.Geometry();
+	for (var i = 0, alpha = 0; i <= 60; i++) {
+	alpha += Math.PI * 2 / 60;
+	geometry.vertices.push(new THREE.Vector3(R * Math.cos(alpha), 0,  R * Math.sin(alpha)));
+	}
+	var border = new THREE.Line(geometry, new THREE.LineDashedMaterial({
+	color: 0x0000ff,
+	dashSize: 20,
+	}));
+	scene.add(border);
+	border.computeLineDistances();
+	border.position.y=1;
+	let geometry2 = new THREE.Geometry();
+	for (var i = 0, alpha = 0; i <= 60; i++) {
+	alpha += Math.PI * 2 / 60;
+	geometry2.vertices.push(new THREE.Vector3(0.8 * R * Math.cos(alpha), 0, -0.8 * R * Math.sin(alpha)));
+	}
+	var border2 = new THREE.Line(geometry2, new THREE.LineDashedMaterial({
+	color: 0x00ffff,
+	dashSize: 20,
+	}));
+	scene.add(border2);
+	border2.position.y=1;
+	border2.computeLineDistances();
+
+	var pointLight = new THREE.PointLight (0xffffff);
+	pointLight.position.set (100,200,-100);
+	scene.add (pointLight);
+	var directionalLight = new THREE.DirectionalLight(0xffffff);
+	directionalLight.position.set(0, 0, 1).normalize();
+	scene.add(directionalLight);
+	readModel('Jeep');
+	//theObject.position.x=50;
+   //readModel2('Jeep_1385');
+	//scene.add(speedboard);
+	}
+
+
+	////////////////////////////////////////////////////model1
+	function readModel (modelName,targetSize=20) {
+
+	var onProgress = function(xhr) {
+	if (xhr.lengthComputable) {
+	var percentComplete = xhr.loaded / xhr.total * 100;
+	console.log(Math.round(percentComplete, 2) + '% downloaded');
+	}
+	};
+
+	var onError = function(xhr) {};
+
+	var mtlLoader = new THREE.MTLLoader();
+	mtlLoader.setPath('models/car1/');
+	mtlLoader.load(modelName+'.mtl', function(materials) {
+
+	materials.preload();
+
+	var objLoader = new THREE.OBJLoader();
+	objLoader.setMaterials(materials);
+	objLoader.setPath('models/car1/');
+	objLoader.load(modelName+'.obj', function(object) {
+
+	theObject =  unitize (object, targetSize);
+	//theObject.add ( new THREE.BoxHelper (theObject) )
+	theObject.name = 'OBJ'
+	//scene.add (theObject);
+	
+	}, onProgress, onError);
+
+	});
+
+	}
+
+	////////////////////////////////////////////////
+	/*function readModel2 (modelName,targetSize=20) {
+
+	var onProgress = function(xhr) {
+	if (xhr.lengthComputable) {
+	var percentComplete = xhr.loaded / xhr.total * 100;
+	console.log(Math.round(percentComplete, 2) + '% downloaded');
+	}
+	};
+
+	var onError = function(xhr) {};
+
+	var mtlLoader = new THREE.MTLLoader();
+	mtlLoader.setPath('models/car2/');
+	mtlLoader.load(modelName+'.mtl', function(materials) {
+
+	materials.preload();
+
+	var objLoader = new THREE.OBJLoader();
+	objLoader.setMaterials(materials);
+	objLoader.setPath('models/car2/');
+	objLoader.load(modelName+'.obj', function(object) {
+
+	theObject2 =  unitize (object, targetSize);
+	//theObject.add ( new THREE.BoxHelper (theObject) )
+	theObject2.name = 'OBJ'
+	//scene.add (theObject);
+	theObject2.position.set(0,2,0);
+    cars.push(theObject2.clone());
+	scene.add(cars[1]);
+	
+	//scene.remove(cars[1]);
+	}, onProgress, onError);
+
+	});
+
+	}*/
+	////////////////////////////////////////
+	// wrap an Object3D around the given object
+	// so that it is centered at +Y axis
+	// 
+	function unitize (object, targetSize) {  
+
+	// find bounding box of 'object'
+	var box3 = new THREE.Box3();
+	box3.setFromObject (object);
+	var size = new THREE.Vector3();
+	size.subVectors (box3.max, box3.min);
+	var center = new THREE.Vector3();
+	center.addVectors(box3.max, box3.min).multiplyScalar (0.5);
+
+	console.log ('center: ' + center.x + ', '+center.y + ', '+center.z );
+	console.log ('size: ' + size.x + ', ' +  size.y + ', '+size.z );
+
+	// uniform scaling according to objSize
+	var objSize = Math.max (size.x, size.y, size.z);
+	var scaleSet = targetSize/objSize;
+	  
+	var theObject1 =  new THREE.Object3D();
+	theObject1.add (object);
+	object.scale.set (scaleSet, scaleSet, scaleSet);
+	object.rotation.y=Math.PI;
+    
+	return theObject1;
+
+	}
+
+	/////////////////////////////////////////
+	function onWindowResize() {
+	var ww = $("#container").innerWidth();
+	var hh = $("#container").innerHeight();
+
+	camera.aspect = ww / hh;
+	camera.updateProjectionMatrix();
+	renderer.setSize(ww, hh);
+
+	}
+	
+
+	function animate() {
+	
+		/*if(theObject!=undefined)
+        cars.push(theObject.clone());
+		
+		
+		theta+=0.1;
+		if(cars[0]!=undefined)
+		{scene.add(cars[0]);
+		cars[0].rotation.y=theta;}*/
+		if(meshes[1].material.visible == false&&judge==true){
+		if(!step)
+		{
+		  clock.start();
+		  step=true;
+		}
+		var a=clock.getElapsedTime()
+		//console.log(a);
+			if(a < 1 && a > 0){
+				$("#start").text('2');
+			}
+			else if(a < 2 && a > 1){
+				$("#start").text('1'); 
+			}
+			else if(a < 3 && a > 2){
+		  $("#start").text('ReadyGO!');
+		  document.getElementById("start").setAttribute("style", "position:absolute;left:42vw;top:15vh;font-size:50px;color:red;");
+			}
+			else {
+		  $("#start").text(' ');
+		  judge=false;
+		  //console.log('ready');
+			}
+	  }
+
+	requestAnimationFrame(animate);
+	render();
+	dt = clock.getDelta();
+	//console.log(clock.getElapsedTime());
+	//myID=0;
+     console.log('myID'+myID);
+	 
+	 
+	if (engines[myID]) {
+
+	thetas[myID] += omegas[myID] * dt;
+	meshes[myID].position.set(Rs[myID] * Math.cos(thetas[myID]), 2.5, -Rs[myID] * Math.sin(thetas[myID]))
+	meshes[myID].rotation.y=thetas[myID];
+	
+	/*if(cars[myID]!=undefined){
+    cars[myID].position.set(Rs[myID] * Math.cos(thetas[myID]), 2.5, -Rs[myID] * Math.sin(thetas[myID]))
+	cars[myID].rotation.y=thetas[myID];
+	}*/
+	
+
+	if (myID !== undefined) {
+			if (isStep[myID])
+		{omegas[myID] += 0.1;
+		fuels[myID] -= 0.3;
+		if (omegas[myID] > 4) omegas[myID] = 4;}
+		else{
+		  fuels[myID] -= 0.03;
+		  omegas[myID] -= 0.02;
+		  if (omegas[myID] < 0) omegas[myID] = 0;
+		}
+		}
+		if (otherID !== undefined) {
+		if (isStep[otherID])
+		{omegas[otherID] += 0.1;
+		fuels[otherID] -= 0.3;
+		if (omegas[otherID] > 4) omegas[otherID] = 4;}
+		else{
+		  fuels[otherID] -= 0.03;
+		  omegas[otherID] -= 0.02;
+		  if (omegas[otherID] < 0) omegas[otherID] = 0;
+		}
+	  }
+
+	}
+
+	if (engines[otherID]) {
+
+	thetas[otherID] += omegas[otherID] * dt;
+	meshes[otherID].position.set(Rs[otherID] * Math.cos(thetas[otherID]), 2.5, -Rs[otherID] * Math.sin(thetas[otherID]))
+	meshes[otherID].rotation.y=thetas[otherID];
+   /* if(cars[otherID]!=undefined){
+	cars[otherID].position.set(Rs[otherID] * Math.cos(thetas[otherID]), 2.5, -Rs[otherID] * Math.sin(thetas[otherID]))
+	cars[otherID].rotation.y=thetas[otherID];}*/
+		if (otherID !== undefined) {
+		if (isStep[otherID])
+		{omegas[otherID] += 0.1;
+		fuels[otherID] -= 0.3;
+		if (omegas[otherID] > 4) omegas[otherID] = 4;}
+		else{
+		  fuels[otherID] -= 0.03;
+		  omegas[otherID] -= 0.02;
+		  if (omegas[otherID] < 0) omegas[otherID] = 0;
+		}
+	  }
+
+	}
+
+
+	if(myID==0){
+	cameraB.position.set(0.9 * R * Math.cos(thetas[myID] + 0.1), 5, -0.9 * R * Math.sin(thetas[myID] + 0.1));
+	cameraB.lookAt(0.9 * R * Math.cos(thetas[myID] - 0.21), 0, -0.9 * R * Math.sin(thetas[myID] - 0.21));
+	cameraC.position.set(1.1 * R * Math.cos(thetas[myID] +0.1), 5, -1.1 * R * Math.sin(thetas[myID] +0.1));
+	cameraC.lookAt(1.1 * R * Math.cos(thetas[myID] -0.21), 0, -1.1 * R * Math.sin(thetas[myID] -0.21));}
+	else{
+	  cameraB.position.set(0.7 * R * Math.cos(thetas[myID] + 0.1), 5, -0.7 * R * Math.sin(thetas[myID] + 0.1));
+	  cameraB.lookAt(0.7 * R * Math.cos(thetas[myID] - 0.21), 0, -0.7 * R * Math.sin(thetas[myID] - 0.21));
+	  cameraC.position.set(0.9 * R * Math.cos(thetas[myID] +0.1), 5, -0.9 * R * Math.sin(thetas[myID] + 0.1));
+	  cameraC.lookAt(0.9 * R * Math.cos(thetas[myID] - 0.21), 0, -0.9 * R * Math.sin(thetas[myID] -0.21));
+	}
+	if (fuels[myID] < 0) {
+	engines[myID] = false;
+	fuels[myID] = 0;
+	}
+	if (fuels[otherID] < 0) {
+	engines[otherID] = false;
+	fuels[otherID] = 0;
+	}
+	var x=fuels[myID];
+	//console.log('fuels'+x);
+	$('#fuel').text('fuels:'+x.toFixed(2));
+
+
+	 
+	}
+
+
+
+	function render() {
+
+	renderer.render(scene, camera);
+
+	rendererB.setRenderTarget (renderTarget);
+	rendererB.render (scene, cameraB); 
+	rendererB.setRenderTarget (null);
+	rendererB.render(sceneRTT, cameraRTT);
+
+	rendererC.setRenderTarget (renderTargetR);
+	rendererC.render (scene, cameraC); 
+	rendererC.setRenderTarget (null);
+	rendererC.render(sceneR, cameraR);
+
+	}
+
+
+	</script>
+	</body>
+
+	</html>

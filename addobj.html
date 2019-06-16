@@ -1,0 +1,281 @@
+		<!DOCTYPE html>
+
+		<html>
+
+		<head>
+		<style>
+			body {
+			  font-family: Monospace;
+			  background-color: #000;
+			  color: #fff;
+			  margin: 0px;
+			  overflow: hidden;
+			}
+
+			#info {
+			  color: #fff;
+			  position: absolute;
+			  top: 10px;
+			  width: 100%;
+			  text-align: center;
+			  z-index: 100;
+			  display: block;
+			}
+
+
+			
+			
+			#gui {
+			  position: absolute;
+			  top: 30px;
+			  right: 1%;
+			  height: 350px;
+			  width: 100px;
+			}
+
+		</style>
+		</head>
+
+		<body> 
+			<div id="info">
+			  hw12 gui delorian
+			</div>
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5.1/dat.gui.min.js"></script>	
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+			<script src="https://threejs.org/examples/js/controls/OrbitControls.js">
+			</script>
+			<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+			<!--script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/DDSLoader.js"></script-->
+			<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/MTLLoader.js"></script>
+			<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/OBJLoader.js"></script>
+		<canvas id='mycanvas'></canvas>
+         <div id='guiContainer'></div>
+			
+		<script>
+		var camera, scene, renderer;
+		var theObject,theta=0,thetas;
+        var k;
+		var windowHalfX = window.innerWidth / 2;
+		var windowHalfY = window.innerHeight / 2;
+		var controls;
+		var bs;
+		var theModel;
+		var angle = [];
+		var x=[],y=[];
+         var pause,stop;
+         var gcontrols,speed,pointLight;
+        var model = [], n =0;
+		
+		init();
+		animate();
+		var theObject;
+
+		function init() {
+
+		  container = document.createElement('div');
+		  document.body.appendChild(container);
+		  
+			renderer = new THREE.WebGLRenderer({canvas:mycanvas});
+			mycanvas = document.getElementById('mycanvas');
+			
+		  
+		  renderer.setSize(window.innerWidth, window.innerHeight);
+		  container.appendChild(renderer.domElement);
+		  renderer.setClearColor (0x888888);
+
+		  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 2000);
+		  camera.position.z = 100;
+		  controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+		  // scene
+
+		  scene = new THREE.Scene();
+
+		  var ambient = new THREE.AmbientLight(0x444444);
+		  scene.add(ambient);
+			
+		  gridxz = new THREE.GridHelper (200, 20,'red','white');
+		  scene.add (gridxz);
+		  gridxz.rotation.x = Math.PI / 2;
+		  var directionalLight = new THREE.DirectionalLight(0xffffff);
+		  directionalLight.position.set(0, 0, 1).normalize();
+		  scene.add(directionalLight);
+
+		  pointLight = new THREE.PointLight (0xffffff);
+		  pointLight.position.set (100,100,50);
+	      scene.add(pointLight);
+
+	     let sphereSize = 3;
+	     let pointLightHelper = new THREE.PointLightHelper(pointLight, sphereSize);
+	     scene.add(pointLightHelper);
+		 
+		  window.addEventListener('resize', onWindowResize, false);
+		 
+		  ///////////////////////////////////////////////////////////////////	
+			function onWindowResize() {
+
+			  windowHalfX = window.innerWidth / 2;
+			  windowHalfY = window.innerHeight / 2;
+
+			  camera.aspect = window.innerWidth / window.innerHeight;
+			  camera.updateProjectionMatrix();
+
+			  renderer.setSize(window.innerWidth, window.innerHeight);
+
+			}
+			readModel();
+			
+		gcontrols =new function() {
+		this.thetas=0.01;
+		this.speed=0.01;
+        this.k=5;
+        this.pause=false;
+		this.stop=false;
+	    this.addMesh = function() {
+				    model[n] = theObject.clone();
+					scene.add(model[n]);
+					angle[n] = 0;
+					x[n] = 0;
+					y[n] = 0;
+					model[n].position.set(0,0,0);
+					n ++;
+
+				};    
+	   this.removeAdds = function() {
+	                 if(n>=1)
+					scene.remove(model[--n]);
+				};
+    }
+    
+    
+     var gui = new dat.GUI();
+    gui.domElement.id = 'gui';
+
+    var f1 = gui.addFolder("pointlight");
+    f1.add(gcontrols,'thetas',0.01,0.05);
+	f1.add(gcontrols,'stop');
+	var f2 = gui.addFolder("rose curve");
+    f2.add(gcontrols,'speed',0.01,0.05);
+    f2.add(gcontrols, 'k', 5, 8);
+    f2.add(gcontrols, 'pause');
+	var f3 = gui.addFolder("models");
+	f3.add(gcontrols,'addMesh');
+	f3.add(gcontrols,'removeAdds');
+		}
+
+		function readModel (targetSize=40) {
+
+		  var onProgress = function(xhr) {
+			if (xhr.lengthComputable) {
+			  var percentComplete = xhr.loaded / xhr.total * 100;
+			  console.log(Math.round(percentComplete, 2) + '% downloaded');
+			}
+		  };
+
+		  var onError = function(xhr) {};
+
+		  var mtlLoader = new THREE.MTLLoader();
+		  mtlLoader.setPath('models/');
+		  mtlLoader.load('delorian.mtl', function(materials) {
+
+			materials.preload();
+
+			var objLoader = new THREE.OBJLoader();
+			objLoader.setMaterials(materials);
+			objLoader.setPath('models/');
+			objLoader.load('delorian.obj', function(object) {
+				
+				theObject =  unitize (object, targetSize);
+				//theObject.add ( new THREE.BoxHelper (theObject) )
+				theObject.name = 'OBJ'
+				//scene.add (theObject);
+
+			}, onProgress, onError);
+
+		  });
+
+		}
+
+
+		////////////////////////////////////////
+		// wrap an Object3D around the given object
+		// so that it is centered at +Y axis
+		// 
+		function unitize (object, targetSize) {  
+			
+			// find bounding box of 'object'
+			var box3 = new THREE.Box3();
+			box3.setFromObject (object);
+			var size = new THREE.Vector3();
+			size.subVectors (box3.max, box3.min);
+			var center = new THREE.Vector3();
+			center.addVectors(box3.max, box3.min).multiplyScalar (0.5);
+			
+			console.log ('center: ' + center.x + ', '+center.y + ', '+center.z );
+			console.log ('size: ' + size.x + ', ' +  size.y + ', '+size.z );
+			
+			// uniform scaling according to objSize
+			var objSize = Math.max (size.x, size.y, size.z);
+			var scaleSet = targetSize/objSize;
+						
+			var theObject1 =  new THREE.Object3D();
+			theObject1.add (object);
+			object.scale.set (scaleSet, scaleSet, scaleSet);
+			object.rotation.x=-Math.PI/2;
+			object.rotation.z=Math.PI;
+
+			//object.position.set (-center.x*scaleSet, -center.y*scaleSet+5, -center.z*scaleSet);
+			return theObject1;
+					
+		}
+          var angles=0,xs=0,ys=0;
+		function animate() 
+		{
+		                  if(!gcontrols.pause) 
+						   {	
+                           for (var j=0;j<n;j++)angle[j] += gcontrols.speed;
+						    //angles += gcontrols.speed;
+						   }
+						  // xs = -80 * Math.cos(k * angles) * Math.sin(angles) -80* k * Math.sin(k * angles) * Math.cos(angles);
+						   // ys = 80 * Math.cos(k*angles)*Math.cos(angles)-80*k*Math.sin(k*angles)*Math.sin(angles);  
+						  
+						/* if(theObject!=undefined)
+						  {
+						  theObject.position.set(Math.cos(angles)*Math.cos(k*angles)*80, 80*Math.cos(k * angles)* Math.sin(angles), 0);
+						  theObject.rotation.x = Math.PI / 2;
+						  theObject.rotation.y = Math.atan2(ys,xs);
+						  }*/
+                           
+						  requestAnimationFrame(animate);
+						  render();
+						   k = 5;
+						   
+   						   for(var j=0;j<n;j++)
+						   {
+						   x[j] = -80 * Math.cos(gcontrols.k * angle[j]) * Math.sin(angle[j]) -80* gcontrols.k * Math.sin(gcontrols.k * angle[j]) * Math.cos(angle[j]);
+						   y[j] = 80 * Math.cos(gcontrols.k*angle[j])*Math.cos(angle[j])-80*gcontrols.k*Math.sin(gcontrols.k*angle[j])*Math.sin(angle[j]);  
+						   }
+						   
+						  for(var j=0;j<n;j++)
+						  {
+						  model[j].position.set(Math.cos(angle[j])*Math.cos(gcontrols.k*angle[j])*80, 80*Math.cos(gcontrols.k * angle[j])* Math.sin(angle[j]), 0);
+						  model[j].rotation.x = Math.PI / 2;
+						  model[j].rotation.y = Math.atan2(y[j],x[j]);
+						  }
+						  
+						   if(!gcontrols.stop)
+					       theta+=gcontrols.thetas; 
+					       pointLight.position.set(80 * Math.cos(theta) , 80 * Math.sin(theta),60);
+		}
+
+		function render() {
+				
+		  renderer.render(scene, camera);
+
+		}
+
+
+		</script>
+		</body>
+
+		</html>

@@ -1,0 +1,368 @@
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <style>
+        #info {
+        position: absolute;
+        top: 0px;
+        width: 100%;
+        padding: 10px;
+        text-align: center;
+        color: #ffffff
+        }
+
+        body {
+        overflow: hidden;
+        }
+
+
+
+        </style>
+        </head>
+
+        <body>
+        <div id="info">hw4
+        </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+        <script src="https://threejs.org/examples/js/controls/OrbitControls.js">
+        </script>
+        <script src="https://rawgit.com/mrdoob/three.js/dev/examples/js/Gyroscope.js"></script>
+        <script src="https://jyunming-chen.github.io/game3js/js/ccdsys.js"></script>
+
+        <script>
+
+        class Standleg {
+            constructor () {
+            this.theta1 = 0;
+            this.theta2 = 0;
+        }
+        init () 
+        {
+        
+            let body = new THREE.Object3D();
+        this.thigh = new THREE.Object3D();
+        let thighMesh = new THREE.Mesh (new THREE.BoxGeometry(1, 5.2, 1), mat)
+        thighMesh.castShadow = true;
+        thighMesh.receiveShadow = true;
+        this.thigh.add (thighMesh)
+        thighMesh.position.y = -5.2/2
+        
+        this.leg = new THREE.Object3D()
+        let legMesh = new THREE.Mesh (new THREE.BoxGeometry(1, 4.8, 1), mat)
+        legMesh.castShadow = true;
+        legMesh.receiveShadow = true;
+        this.leg.add (legMesh)
+        legMesh.position.y = -4.8/2
+        this.leg.position.y = -5.2
+        
+        this.torso1 = new THREE.Object3D();
+        let torsoMesh = new THREE.Mesh (new THREE.BoxGeometry(1, 3.3, 1), mat)
+        torsoMesh.castShadow = true;
+        torsoMesh.receiveShadow = true;
+        this.torso1.add (torsoMesh)
+        torsoMesh.position.y = 3.3/2
+        
+        body.add (this.torso1)
+        body.add (this.thigh)
+        this.thigh.add (this.leg)
+        return body;
+        
+        }
+        update (thetas) {
+            this.theta1 = thetas[0]
+            this.theta2 = thetas[1]
+            this.thigh.rotation.z = this.theta1
+            this.leg.rotation.z = this.theta2
+            //console.log(this.theata1)
+        }
+        }
+
+
+
+        var camera, scene, renderer;
+        var clock = new THREE.Clock();
+        var clock2 = new THREE.Clock();
+        var clock3 = new THREE.Clock();
+        var theta0, theta1, theta2
+        const LS = 5.3
+        const L2 = 5.2
+        const L1 = 4.8
+        const Lh = 3.3
+        const Hh = 8.3
+        const Hr=0.6
+        var mat = new THREE.MeshPhongMaterial();
+        var thetaGroin, thetaKnee;
+        var standleg,legA,legB,torso;
+        var raycaster;
+        var mouse = new THREE.Vector2();
+        var pickables = [],puck;
+        var feet1,feet2;
+        var dlhelper, dlshelper,light2;
+        init();
+        animate();
+
+
+
+        function fk (thetas, joints) 
+        {  // all memory assumed in place
+        joints[0].set (0,0,0);
+        var localzero = new THREE.Vector3(0, 0, 0);
+        var m = new THREE.Matrix4();
+        m.makeRotationZ(thetas[0]);
+        m.multiply(new THREE.Matrix4().makeTranslation(0, -5.2, 0));
+        localzero.applyMatrix4(m);
+        joints[1].copy(localzero);
+
+        localzero.set(0, 0, 0);
+        m.multiply(new THREE.Matrix4().makeRotationZ(thetas[1]));
+        m.multiply(new THREE.Matrix4().makeTranslation(0, -4.8, 0));
+        localzero.applyMatrix4(m);
+        joints[2].copy(localzero);
+        }
+
+
+
+        function init() {
+        scene = new THREE.Scene();
+
+        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+        camera.position.z = 50;
+
+        var gridXZ = new THREE.GridHelper(200, 20, 'red', 'white');
+        //scene.add(gridXZ);
+
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x333333);
+        
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+
+        //Create a PointLight and turn on shadows for the light
+        
+            //floor.receiveShadow = true;
+        
+        let controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        document.body.appendChild(renderer.domElement);
+        //////////////////////////////////////////////////////////
+        
+        Leftleg = new Standleg ();  // global 
+        legA = Leftleg.init();
+        scene.add (legA);
+        //legA.position.set (0,8.3,1);
+        
+        Leftleg.ccdSys = new CCDSys (fk)
+        Leftleg.ccdSys.setCCDAxis (new THREE.Vector3(0,0,1), 0)
+        Leftleg.ccdSys.setCCDAxis (new THREE.Vector3(0,0,1), 1,-Math.PI/2,0)
+        Leftleg.target = new THREE.Vector3();
+        
+        Rightleg = new Standleg ();  // global 
+        legB = Rightleg.init();
+        scene.add (legB);
+        // legB.position.set (0,8.3,-1);
+        
+        Rightleg.ccdSys = new CCDSys (fk)
+        Rightleg.ccdSys.setCCDAxis (new THREE.Vector3(0,0,1), 0)
+        Rightleg.ccdSys.setCCDAxis (new THREE.Vector3(0,0,1), 1,-Math.PI/2,0)
+        Rightleg.target = new THREE.Vector3();
+        
+            light = new THREE.SpotLight(0xffffff, 1.5);
+            light.position.set(0, 50, 80);
+            light.angle = Math.PI / 3;
+            light.penumbra = 0.5;
+            light.target = legB;
+            light.target = legA;
+            
+            // shadow map settings
+            light.castShadow = true;
+            light.shadow.mapSize.width = 3000;
+        light.shadow.mapSize.height = 3000;
+        light.shadow.camera.near = 10;
+        light.shadow.camera.far = 200;
+        light.shadow.camera.fov = light.angle / Math.PI * 180 * 2;
+        
+            gyro = new THREE.Gyroscope();
+        scene.add (gyro)
+        gyro.add (camera)
+        legA.add (gyro)
+        gyro.add(light);
+        
+            let loader = new THREE.TextureLoader()
+            loader.crossOrigin = '';
+        var  texture = loader.load ( 'https://static.vecteezy.com/system/resources/previews/000/133/727/non_2x/vector-wood-planks-background.jpg' );
+        let plane = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshPhongMaterial({map:texture
+        }));
+        scene.add(plane);
+        plane.rotation.x = -Math.PI / 2;
+        light.target = plane;
+        // pickables = [plane];
+        //  plane.castShadow = true;
+        plane.receiveShadow = true;
+        /*  puck = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 2, 20), new THREE.MeshNormalMaterial());
+        puck.rotation.x=Math.PI/2
+        scene.add(puck);  
+
+            //raycaster = new THREE.Raycaster();
+        //document.addEventListener('mousemove', onDocumentMouseDown, false);*/
+        
+        }
+        /*function onDocumentMouseDown(event) {
+
+        event.preventDefault();
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        // find intersections
+        raycaster.setFromCamera(mouse, camera);
+        var intersects = raycaster.intersectObjects(pickables);
+        if (intersects.length > 0) {
+            puck.position.copy(intersects[0].point);
+            Leftleg.target.copy (legA.worldToLocal (puck.position.clone()) )/   
+        }
+
+        }*/
+
+        var feet1time;
+        var feet2time;
+        var final1,final2=3;
+        var initial1=0,initial2=0;
+        var judge=true;
+        var period=1;
+        var target2,target3
+        var x1,y1,x2,y2;
+        var i1,j1,i2,j2;
+        
+        function update()
+        {
+        feet1time=clock2.getElapsedTime();
+        feet2time=clock3.getElapsedTime();
+        // console.log(feet2time);
+        var dt = clock.getElapsedTime();
+        if(judge)
+        {
+        feet1time=clock2.getElapsedTime();
+        final1=initial1+feet1time;
+        }
+        else 
+        {
+        feet2time=clock3.getElapsedTime();
+        final2=initial2+feet2time;
+        }
+        console.log(final1)
+        if (dt > 3 * period && judge) 
+        {
+            judge = !judge;
+            initial1=final1;
+            initial2=final1;
+            clock2.stop();
+            clock3.start();
+            period += 1;
+        } 
+            else if (dt > 3 * period) 
+            {
+            judge = !judge;
+            initial2=final2;
+            clock3.stop();
+            clock2.start();
+            period+= 1;
+            }
+        //console.log(Math.floor(dt))
+        legA.position.set(LS/2+LS*(dt/3),Hh-Hr/2*Math.cos(2*Math.PI*(dt/3)),0.5);
+        legB.position.set(LS/2+LS*(dt/3),Hh-Hr/2*Math.cos(2*Math.PI*(dt/3)),-0.5);
+        
+        target2 = new THREE.Vector3(2*LS*(final1/3),1/2-1/2*Math.cos(2*Math.PI*(final1/3))+0.5,5)
+        target3 = new THREE.Vector3(2*LS*(final2/3)-LS,1/2-1/2*Math.cos(2*Math.PI*(final2/3))+0.5,-5)
+        
+        var thetas1 = [Leftleg.theta1, Leftleg.theta2];
+        var thetas2 = [Rightleg.theta1, Rightleg.theta2];
+        
+        Leftleg.target.copy(legA.worldToLocal (target2));
+            Leftleg.ccdSys.solve (Leftleg.target, thetas1);
+            Leftleg.update (thetas1)
+        ////
+        Rightleg.target.copy(legB.worldToLocal (target3));
+            Rightleg.ccdSys.solve (Rightleg.target, thetas2);
+            Rightleg.update (thetas2)
+        }
+        
+        var x1=0,y1=0,x2=-LS,y2=0;
+        var i1=0,j1=0,i2=0,j2=0;
+        var count=0;
+        function animate() 
+        {
+        /*var dt = clock.getElapsedTime();
+        var z=Math.floor(dt/5);
+        var temp=dt;
+        var s;
+        temp=temp-5*count;
+        if(z%2==1)
+        { 
+            if(temp/5>1)
+        {
+            count++;
+            s=(temp-5*count)/5
+            console.log(temp)
+            
+        }
+        else s=temp/5
+            x2+=i2+2*LS*s;
+            i2=x2;
+            i1=x1;
+            y2=-1/2*Math.cos(2*Math.PI*(s))
+            y1=0;
+        }
+        else
+        {
+            if(temp/5>1)
+        {
+            count++;  
+            s=(temp-5*count)/5
+        }
+        else s=temp/5
+            x1+=i1+2*LS*s;
+            y1=-1/2*Math.cos(2*Math.PI*(s))
+            i1=x1;
+            i2=x2;
+            y2=0;
+        }
+            
+        legA.position.set(LS/2+LS*(dt/5),Hh-Hr/2*Math.cos(2*Math.PI*(dt/5)),0.5);
+        legB.position.set(LS/2+LS*(dt/5),Hh-Hr/2*Math.cos(2*Math.PI*(dt/5)),-0.5);
+        
+        target2 = new THREE.Vector3(x1,y1,5)
+        target3 = new THREE.Vector3(x2,y2,-5)
+        
+        var thetas1 = [Leftleg.theta1, Leftleg.theta2];
+        var thetas2 = [Rightleg.theta1, Rightleg.theta2];
+        
+        Leftleg.target.copy(legA.worldToLocal (target2));
+            Leftleg.ccdSys.solve (Leftleg.target, thetas1);
+            Leftleg.update (thetas1)
+        ////
+        Rightleg.target.copy(legB.worldToLocal (target3));
+            Rightleg.ccdSys.solve (Rightleg.target, thetas2);
+            Rightleg.update (thetas2)*/
+        update();
+        
+        requestAnimationFrame(animate);
+        render();
+        }
+
+        function render() {
+        renderer.render(scene, camera);
+        }
+
+
+
+
+
+
+
+
+
+
+        </script>
+        </body>
+
+        </html>

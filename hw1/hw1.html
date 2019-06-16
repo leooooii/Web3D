@@ -1,0 +1,178 @@
+		<!DOCTYPE html>
+
+		<html>
+
+		<head>
+		<style>
+			
+	
+
+		</style>
+		</head>
+
+		<body background="https://png.pngtree.com/thumb_back/fw800/back_pic/04/12/78/38581c92382b5cc.jpg"style=" background-repeat:double-repeat ;background-size:50% 100%; background-attachment:fixed;" >
+            <div >
+                <p  style="text-align: center">
+                hw1
+                <br>
+                <button id="control"  style="text-align: center">
+               Light Off
+              </button>
+                <button id="mode"  style="text-align: center">
+               Simple Mode
+              </button>
+              <br>
+                <button id="audio"  style="text-align: center">
+               Music Off
+              </button>
+              </p>
+              <!--
+                <div id="light" style="position:absolute;top:10vw;left:30vw;  
+              background:pink;width:20px;height:20px;  
+              border-radius:15px;z-index:1"></div>
+              -->
+            <img src="image/star.png" style="position:absolute;top:10vw;left:46.5vw;width:8vw;height:10vw;z-index:-1">
+            <img src="image/stub.png" style="position:absolute;top:40vw;left:27vw;width:50vw;height:30vw;z-index:-1">
+            <img src="image/santa.png" style="position:absolute;top:40vw;left:15vw;width:20vw;height:30vw;z-index:-1">
+            <img src="image/snowman.png" style="position:absolute;top:35vw;left:55vw;width:40vw;height:50vw;z-index:-1">
+            <img src="image/light.png" style="position:absolute;top:28vw;left:47vw;width:6vw;height:5vw;z-index:-1">
+            <img src="image/light.png" style="position:absolute;top:35vw;left:50vw;width:6vw;height:5vw;z-index:-1">
+            <img src="image/light.png" style="position:absolute;top:40vw;left:46vw;width:6vw;height:5vw;z-index:-1">
+            <img src="image/light2.png" style="position:absolute;top:25vw;left:46vw;width:7vw;height:6vw;z-index:-1">
+            <img src="image/light2.png" style="position:absolute;top:32vw;left:48vw;width:8vw;height:7vw;z-index:-1">
+            <img src="image/light2.png" style="position:absolute;top:47vw;left:51vw;width:8vw;height:7vw;z-index:-1">
+            <img src="image/top.png" style="position:absolute;top:12vw;left:42vw;width:18vw;height:18vw;z-index:-1">
+            <img src="image/sock.png" style="position:absolute;top:45vw;left:42vw;width:18vw;height:18vw;z-index:-1">
+            <img src="image/sock2.png" style="position:absolute;top:46vw;left:45vw;width:18vw;height:18vw;z-index:-1">
+            <img src="image/hand.png" style="position:absolute;top:53vw;left:30vw;width:18vw;height:18vw;z-index:-1">
+            <img src="image/tree2.png" style="position:absolute;top:5vw;left:25vw;width:50vw;height:70vw;z-index:-2">
+            </div>
+            <audio id="soundtrack" autoplay loop style="display:none">
+              <source src="sounds/bells.mp3" type='audio/mp3'>
+              </audio>
+            <script src="https://code.jquery.com/jquery-2.1.4.min.js">
+            </script>
+              
+
+			
+		<script>
+var mode = true;
+var change=true;
+var music=true;
+$('#control').click ( function() {
+	mode = !mode;
+  if (mode === true) 
+  {
+  	$('#control').text ('Light Off');  
+  }
+  else 
+  {
+  	$('#control').text ('Light On');  
+  }
+});
+$('#audio').click ( function() {
+	music = !music;
+  if (music === true) 
+  {
+  	$('#audio').text ('Music Off');  
+    soundtrack.play();
+  }
+  else 
+  {
+  	$('#audio').text ('Music On');  
+    soundtrack.pause();
+  }
+});
+
+$('#mode').click ( function() {
+	change = !change;
+  if (change === false) 
+  {
+  	$('#mode').text ('Complex Mode');  
+  }
+  else 
+  {
+  	$('#mode').text ('Simple Mode');  
+  }
+});
+class Light {
+  
+  constructor() {  
+  	// create/append div dynamically
+    // https://stackoverflow.com/questions/14004117/create-div-and-append-div-dynamically
+    this.element = document.createElement ('div');
+    //this = iDiv;
+    this.element.id = 'light';
+    // set element style attribute
+    //https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style
+    this.element.style.cssText = "position:absolute;width:15px;height:15px;border-radius:15px;z-index:1"; 
+	  this.element.style.top = '25vw';
+    this.element.style.left = '50vw';
+    // CSS color property: https://www.w3schools.com/cssref/pr_text_color.asp
+    // hsl: https://www.w3schools.com/colors/colors_hsl.asp
+    this.element.style.background = "hsl(89, 43%, 51%)";
+    document.getElementsByTagName('body')[0].appendChild(this.element);
+  }
+
+	changeColor() 
+  {
+  	// https://stackoverflow.com/questions/45147661/javascript-recursion-within-a-class/45147713
+    var self = this;
+  	var hue = Math.random()*200;
+    var time=Math.random();
+    if(mode==true)
+    {
+  	self.element.style.backgroundColor = "hsl(" + hue + ", 43%, 51%)";  
+    }
+    else
+    self.element.style.backgroundColor = "hsl(" + hue + ", 0%, 51%)";
+    if(change)
+    setTimeout (function() { self.changeColor() } , 1000);
+    else
+    {
+      var period=(Math.random() + 1).toFixed(2)*100;
+      console.log(period);
+      setTimeout (function() { self.changeColor() } , period);
+    }
+		// setTimeout ( self.changeColor , 1000);  // why this is not working ...
+  }
+}
+
+////////////////////////////////
+init();
+
+function init() {
+ var light = new Light();var light2 = new Light();var light3 = new Light();
+ var light4 = new Light();var light5 = new Light();var light6 = new Light();
+ var light7 = new Light();var light8 = new Light();var light9 = new Light();
+ var light10 = new Light();var light11 = new Light();var light12 = new Light();
+ var light13 = new Light();var light14 = new Light();var light15 = new Light();var light16 = new Light();var light17 = new Light();
+ light2.element.style.top = '30vw';light2.element.style.left = '52vw';
+ light3.element.style.top = '34vw';light3.element.style.left = '47vw';
+ light4.element.style.top = '35vw';light4.element.style.left = '51vw';
+ light5.element.style.top = '40vw';light5.element.style.left = '46vw';
+ light6.element.style.top = '42vw';light6.element.style.left = '51vw';
+ light7.element.style.top = '43vw';light7.element.style.left = '55vw';
+ light8.element.style.top = '45vw';light8.element.style.left = '46vw';
+ light9.element.style.top = '48vw';light9.element.style.left = '49vw';
+ light10.element.style.top = '48vw';light10.element.style.left = '43vw';
+ light11.element.style.top = '49vw';light11.element.style.left = '53vw';
+ light12.element.style.top = '52vw';light12.element.style.left = '47vw';
+ light13.element.style.top = '53vw';light13.element.style.left = '40vw';
+ light14.element.style.top = '54vw';light14.element.style.left = '55vw';
+ light15.element.style.top = '58vw';light15.element.style.left = '50vw';
+ light16.element.style.top = '59vw';light16.element.style.left = '59vw';
+ light17.element.style.top = '57vw';light17.element.style.left = '40vw';
+ light.changeColor();light2.changeColor();light3.changeColor();
+ light4.changeColor();light5.changeColor();light6.changeColor();
+ light7.changeColor();light8.changeColor();light9.changeColor();
+ light10.changeColor();light11.changeColor();light12.changeColor();
+ light13.changeColor();light14.changeColor();light15.changeColor();light17.changeColor();light16.changeColor();
+}
+
+
+
+		</script>
+		</body>
+
+		</html>

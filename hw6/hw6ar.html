@@ -5,299 +5,319 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AR</title>
   <style type="text/css">
-    html {
-      overflow: hidden;
-    }
-    img{
-      margin:2px;
-      display: inline-block;
-      width: 150px;
-      height: 150px;
-    }
-    @media (max-width:700px){
-        img{
-          margin:2px;
-          display: inline-block;
-          width: 50px;
-          height: 50px;
-        }
-    }
-    #mySlider {
+    #meau {
       top: 0;
-      right: -30vw;
-      width: 30vw;
-
+      right: 35vw;
+      width: 70vw;
       position: fixed;
-      z-index: 9;
-
-    }
-
-    #myContent {
-      background-color: rgba(255, 255, 255, .6);
-      text-align: center;
-      padding-top: 10px;
-      border:5px #aaaaee solid;
-    }
-
-    #myTab {
-      position: absolute;
-      top: 20px;
-      left: -29px;
-      width: 24px;
-      background-color: rgba(255, 255, 255, .6);
-      color: #000000;
-
-      text-align: center;
-      padding: 9px 0;
-      border:5px #aaaaee solid;
-      -moz-border-radius-topleft: 10px;
-      -moz-border-radius-bottomleft: 10px;
-      -webkit-border-top-left-radius: 10px;
-      -webkit-border-bottom-left-radius: 10px;
-    }
-
-    #myTab span {
-      display: block;
-      height: 3vh;
-      padding: 1px 0;
-      line-height: 12px;
-      text-transform: uppercase;
-      font-size: 1.2em;
+      z-index: 1;
     }
   </style>
 </head>
 <body>
-  <div id="mySlider">
-    <div id="myTab">
-      <span>菜</span>
-      <span>單</span>
-      <span>一</span>
-      <span>覽</span>
-    </div>
-    <div id="myContent">
-      <img id="pic0" src="../media/images/Hamburger.jpg"  title="Hamburger">
-      <img id="pic1" src="../media/images/cake.jpg" title="cake">
-      <img id="pic2" src="../media/images/pizza.jpg"  title="pizza">
-      <img id="pic3" src="../media/images/Donitsi.jpg"  title="Donitsi">
-      <img id="pic4" src="../media/images/pie.jpg"  title="pie">
-    </div>
-  </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
-  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-  <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/MTLLoader.js"></script>
-  <script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/OBJLoader.js"></script>
-  <!-- ar.js -->
-  <script src="../build/ar.js"></script>
-  <script>THREEx.ArToolkitContext.baseURL = '../'</script>
-  <!-- -->
-  <script type="text/javascript">
-    var frame, scene, camera, renderer, light, controls;
-    var arToolkitSource, arToolkitContext, markeHiro;
-    var stats, mySelector = 0;
-    var models = ['Hamburger', 'cake', 'pizza', 'Donitsi', 'pie'], ready = false;
+   <div id="meau">
+<img width="100" height ="110" id="food2" src="https://imgur.com/92eBZew.jpg" style="position:absolute; left:310px; text-align: center;padding-top: 10px;border:5px #ffffff solid;" title="meal">
+<img width="100" height ="110" id="food1" src="https://imgur.com/DjXvtL5.jpg" style=" position:absolute; left:425px;text-align: center;padding-top: 10px;border:5px #ffffff solid;"title="noodle">
+<img width="100" height ="110" id="food0" src="https://imgur.com/7mMrhUb.jpg" style=" position:absolute; left:540px;text-align: center;padding-top: 10px;border:5px #ffffff solid;"title="hotdog">
+<img width="100" height ="110" id="food3" src="https://imgur.com/wXtuyaG.jpg" style=" position:absolute; left:655px;text-align: center;padding-top: 10px;border:5px #ffffff solid;"title="donut">
+<img width="100" height ="110" id="food4" src="https://imgur.com/sTBaV6G.jpg" style=" position:absolute; left:770px;text-align: center;padding-top: 10px;border:5px #ffffff solid;"title="flan">
+</div>
+<script src='build/three.min.js'></script>
+<script src="build/stats.min.js"></script>
+<!-- ar.js -->
+<script src="build/ar.js"></script>
+<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/MTLLoader.js"></script>
+<script src="https://rawgit.com/mrdoob/three.js/master/examples/js/loaders/OBJLoader.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
+<div style='font-size:2em;position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;color:White'>
+	AR.Resturant</a> 
+</div>
 
-    $(function(){
-       ////側邊滑動視窗
-       let w = $("#myContent").width() + 10; //width + border
-       $('#myContent').css('height', ($(window).height() - 20) + 'px'); //將區塊自動撐滿畫面高度
+<script>
 
-       $("#myTab").click(function() { //滑鼠點擊時
-         if ($("#mySlider").css('right') == '-' + w + 'px') {
-           $("#mySlider").animate({
-             right: '0px'
-           }, 600, 'swing');
-         }
-         else{
-           $("#mySlider").animate({
-             right: '-' + w + 'px'
-           }, 600, 'swing');
-         }
-       });
-        ////切換model
-        for(let i=0;i<models.length;i++){
-          let pic = '#pic' + i;
-           $(pic).click(function(){
-             if(mySelector != i){
+
+// global variables
+var renderer, scene, camera;
+var stats;
+var markerKanji, markerHiro;
+var arToolKitSource, arToolKitContext;
+
+var raycaster, pickables;
+var showHiro = false;
+var _iOSDevice;
+var markerRootHiro;
+var counter = 0, _sign = 1;
+var food = ['hotdog', 'noodle', 'meal', 'donut', 'Flan'];
+var theObject;
+var order=0,move=false;
+
+   $(function(){
+        for(let i=0;i<food.length;i++){
+          let foods = '#food' + i;
+           $(foods).click(function(){
+             if(order != i){
                ready = false;
-               let selectedObject = markeHiro.getObjectByName(models[mySelector]);
-               markeHiro.remove(selectedObject);
-               mySelector = i;
-               readModel(models[mySelector]);
+               let selectedObject = markerRootHiro.getObjectByName(food[order]);
+               markerRootHiro.remove(selectedObject);
+               order = i;
+               readModel(food[order]);
+			   move=true;
              };
            });
          };
     });
-    init();
-    animate();
 
-    function init() {
+init();
+animate();
 
-      renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true
-      });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setClearColor(new THREE.Color('lightgrey'), 0);
-      renderer.domElement.style.position = 'absolute'
-    	renderer.domElement.style.top = '0px'
-    	renderer.domElement.style.left = '0px'
-      document.body.appendChild(renderer.domElement);
+function init() {
+	let _iOSDevice = !!navigator.platform.match(/iPhone|iPod|iPad/);
+	console.log ('iOS: ' + _iOSDevice)
+	// init renderer
+	renderer	= new THREE.WebGLRenderer({
+		// antialias	: true,
+		alpha: true
+	});
+	renderer.setClearColor(new THREE.Color('lightgrey'), 0)
+	// renderer.setPixelRatio( 1/2 );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.domElement.style.position = 'absolute'
+	renderer.domElement.style.top = '0px'
+	renderer.domElement.style.left = '0px'
+	document.body.appendChild( renderer.domElement );
 
-      scene = new THREE.Scene();
+	// init scene and camera
+	scene	= new THREE.Scene();
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		Initialize a basic camera
+	//////////////////////////////////////////////////////////////////////////////////
 
-      camera = new THREE.Camera();
-	    scene.add(camera);
+	// Create a camera
+	camera = new THREE.Camera();
+	scene.add(camera);
+
+	////////////////////////////////////////////////////////////////////////////////
+	//          handle arToolkitSource
+	////////////////////////////////////////////////////////////////////////////////
+
+	arToolkitSource = new THREEx.ArToolkitSource({
+		// to read from the webcam 
+		sourceType : 'webcam',
+	
+	})
+
+	arToolkitSource.init(function onReady(){
+		onResize()
+	})
+	
+	// handle resize
+	window.addEventListener('resize', function(){
+		onResize()
+	})
+	function onResize(){
+		arToolkitSource.onResize()	
+		arToolkitSource.copySizeTo(renderer.domElement)	
+		if( arToolkitContext.arController !== null ){
+			arToolkitSource.copySizeTo(arToolkitContext.arController.canvas)	
+		}	
+	}
+	////////////////////////////////////////////////////////////////////////////////
+	//          initialize arToolkitContext
+	////////////////////////////////////////////////////////////////////////////////
+	
+	arToolkitContext = new THREEx.ArToolkitContext({
+		cameraParametersUrl: THREEx.ArToolkitContext.baseURL + '../data/data/camera_para.dat',
+		detectionMode: 'mono',
+		maxDetectionRate: 30,
+		canvasWidth: 80*3,
+		canvasHeight: 60*3,
+	})
+	// initialize it
+	arToolkitContext.init(function onCompleted(){
+		// copy projection matrix to camera
+		camera.projectionMatrix.copy( arToolkitContext.getProjectionMatrix() );
+	})
+
+	//markerKanji = addMarkerKanji();
+	//scene.add (markerKanji);
+	markerHiro = addMarkerHiro();
+	scene.add (markerHiro); 
+	
+	
+	stats = new Stats();
+	document.body.appendChild( stats.dom );
+
+	////////////////////////////////////////////////////////
+	// picker
+	
+	if (_iOSDevice)
+		window.addEventListener('touchstart', onTouchStart, false) 
+	else
+		window.addEventListener ('mousedown', onMouseDown, false);
+	raycaster = new THREE.Raycaster();
+	pickables = [markerKanji];	
 
 
-      ////////////////////////////////////////////////////////////////////////////////
-    	//          handle arToolkitSource
-    	////////////////////////////////////////////////////////////////////////////////
-    	arToolkitSource = new THREEx.ArToolkitSource({
-    		// to read from the webcam
-    		sourceType : 'webcam',
+}
 
-    		// // to read from an image
-    		// sourceType : 'image',
-    		// sourceUrl : THREEx.ArToolkitContext.baseURL + 'data/images/HIRO.jpg',
-    		// to read from a video
-    		// sourceType : 'video',
-    		// sourceUrl : THREEx.ArToolkitContext.baseURL + '../data/videos/headtracking.mp4',
-    	})
-    	arToolkitSource.init(function onReady(){
-    		onResize()
-    	})
 
-    	// handle resize
-    	window.addEventListener('resize', function(){
-    		onResize()
-    	})
-    	function onResize(){
-    		arToolkitSource.onResize()
-    		arToolkitSource.copySizeTo(renderer.domElement)
-    		if( arToolkitContext.arController !== null ){
-    			arToolkitSource.copySizeTo(arToolkitContext.arController.canvas)
-    		}
-    	}
-    	////////////////////////////////////////////////////////////////////////////////
-    	//          initialize arToolkitContext
-    	////////////////////////////////////////////////////////////////////////////////
 
-      // create atToolkitContext
-    	arToolkitContext = new THREEx.ArToolkitContext({
-    		cameraParametersUrl: THREEx.ArToolkitContext.baseURL + 'data/data/camera_para.dat',
-    		detectionMode: 'mono',
-        maxDetectionRate: 30,
-        canvasWidth:80*3,
-        canvasHeight: 60*3,
-    	})
-    	// initialize it
-    	arToolkitContext.init(function onCompleted(){
-    		// copy projection matrix to camera
-    		camera.projectionMatrix.copy( arToolkitContext.getProjectionMatrix() );
-    	})
-      markeHiro = addMarkeHiro();
-      scene.add(markeHiro);
-      ////////////////////////////////////////////////////////////////////////////////
 
-      stats = new Stats();
-      stats.showPanel(0);
-      stats.domElement.style.position = 'absolute';
-      stats.domElement.style.left = '0px';
-      stats.domElement.style.top = '0px';
-      document.body.appendChild(stats.domElement);
+function onMouseDown (event) {
+	event.preventDefault();
+  	let ndcX = (event.clientX / window.innerWidth) * 2 - 1;
+  	let ndcY = -(event.clientY / window.innerHeight) * 2 + 1;
 
-      light = new THREE.DirectionalLight(0xffffff);
-      light.position.set(1, 10, 0);
-      markeHiro.add(light);
-      let light2 = new THREE.AmbientLight( 0x404040 );
-      markeHiro.add( light2 );
-      let plane = new THREE.Mesh( new THREE.CircleGeometry(0.7, 20), new THREE.MeshPhongMaterial({color:'#bababa'}) );
-      plane.rotation.x = -Math.PI/2;
-      markeHiro.add(plane);
+	doToggleHiro (ndcX, ndcY)  	
+}
 
-      /////Models
+	
+function addMarkerHiro () {
+    markerRootHiro = new THREE.Group();
+	var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRootHiro, {
+		type : 'pattern',
+		 patternUrl : THREEx.ArToolkitContext.baseURL + '../data/data/patt.hiro'
+	})
 
-      readModel(models[mySelector]);
-    }
+	var geometry	= new THREE.PlaneGeometry(1,1);
+		
+	let loader = new THREE.TextureLoader();
+	loader.setCrossOrigin('')
+	let texture = loader.load( 'https://img.freepik.com/free-photo/texture-checkered-tablecloth_1205-247.jpg?size=626&ext=jpg' );
+	let material = new THREE.MeshBasicMaterial( { 
+		map: texture,
+		transparent: true,
+		side: THREE.DoubleSide
+		} );
 
-    function animate() {
-      stats.begin();
-      stats.end();
-      requestAnimationFrame(animate);
-      if(arToolkitSource.ready === false) return;
-      arToolkitContext.update(arToolkitSource.domElement);
-      if(ready)
-        frame.rotation.y += 0.01;
-      render();
-    }
-    function render() {
-      renderer.render(scene, camera);
-    }
-    function addMarkeHiro(){
-      let markerRoot = new THREE.Group();
-      var artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
-    		type : 'pattern',
-    		patternUrl : THREEx.ArToolkitContext.baseURL + 'data/data/patt.hiro'
-    		// patternUrl : THREEx.ArToolkitContext.baseURL + 'data/data/patt.kanji'
-    	})
+	let hulkGroup = new THREE.Object3D();
+	markerRootHiro.add (hulkGroup);
+	
+	let mesh	= new THREE.Mesh( geometry, material );
+	//mesh.position.y	= geometry.parameters.height/2
+	mesh.rotation.x=Math.PI/2;
+	hulkGroup.add (mesh);
+    //readModel(food[1]);
+    var spotLight6 = new THREE.SpotLight(0xffffff);
+    spotLight6.position.set ( 5, 40, 10 );
+	markerRootHiro.add( spotLight6 );
 
-      return markerRoot;
-    }
-    ///model
+/*
+let cube = new THREE.Mesh (new THREE.BoxGeometry (3,2,1), new THREE.MeshNormalMaterial())
+markerRootHiro.add (cube)
+cube.position.z = -5;
+*/
+	/// add gridhelper
+	var gridXZ = new THREE.GridHelper(1,10);
+	//markerRootHiro.add (gridXZ);
+	
+	return markerRootHiro;
+}
 
-    function readModel(modelName, targetSize = 1) {
-      var onProgress = function(xhr) {
-        if (xhr.lengthComputable) {
-          var percentComplete = xhr.loaded / xhr.total * 100;
-          console.log(Math.round(percentComplete, 2) + '% downloaded');
-        }
-      };
-      var onError = function(xhr) {};
-      var mtlLoader = new THREE.MTLLoader();
-      mtlLoader.setPath('models/');
-      mtlLoader.load(modelName + '.mtl', function(materials) {
-        materials.preload();
-        var objLoader = new THREE.OBJLoader();
-        objLoader.setMaterials(materials);
-        objLoader.setPath('models/');
-        objLoader.load(modelName + '.obj', function(object) {
+	function readModel (modelName,targetSize=0.9) {
 
-          let theObject = unitize(object, targetSize);
-          //theObject.rotation.x = Math.PI / 2;
-          theObject.name = modelName;
-          markeHiro.add(theObject);
-          frame = theObject;
-          ready = true;
-        }, onProgress, onError);
-      });
-    }
+		  var onProgress = function(xhr) {
+			if (xhr.lengthComputable) {
+			  var percentComplete = xhr.loaded / xhr.total * 100;
+			  console.log(Math.round(percentComplete, 2) + '% downloaded');
+			}
+		  };
 
-    function unitize(object, targetSize) {
+		  var onError = function(xhr) {};
 
-      // find bounding box of 'object'
-      var box3 = new THREE.Box3();
-      box3.setFromObject(object);
-      var size = new THREE.Vector3();
-      size.subVectors(box3.max, box3.min);
-      var center = new THREE.Vector3();
-      center.addVectors(box3.max, box3.min).multiplyScalar(0.5);
+		  var mtlLoader = new THREE.MTLLoader();
+		  mtlLoader.setPath('model/');
+		  mtlLoader.load(modelName + '.mtl', function(materials) {
 
-      console.log('center: ' + center.x + ', ' + center.y + ', ' + center.z);
-      console.log('size: ' + size.x + ', ' + size.y + ', ' + size.z);
+			materials.preload();
 
-      // uniform scaling according to objSize
-      var objSize = Math.max(size.x, size.y, size.z);
-      var scaleSet = targetSize / objSize;
+			var objLoader = new THREE.OBJLoader();
+			objLoader.setMaterials(materials);
+			objLoader.setPath('model/');
+			objLoader.load(modelName+ '.obj', function(object) {
+				theObject =  unitize (object, targetSize);
+				//theObject.add ( new THREE.BoxHelper (theObject) )
+				theObject.name = modelName
+				markerRootHiro.add (theObject);
+            
+			}, onProgress, onError);
 
-      var theObject = new THREE.Object3D();
-      theObject.add(object);
-      object.scale.set(scaleSet, scaleSet, scaleSet);
-      object.position.set(-center.x * scaleSet, -center.y * scaleSet + 0.1 , -center.z * scaleSet);
+		  });
 
-      return theObject;
+		}
 
-    }
-  </script>
-</body>
-</html>
+
+		////////////////////////////////////////
+		// wrap an Object3D around the given object
+		// so that it is centered at +Y axis
+		// 
+		function unitize (object, targetSize) {  
+			
+			// find bounding box of 'object'
+			var box3 = new THREE.Box3();
+			box3.setFromObject (object);
+			var size = new THREE.Vector3();
+			size.subVectors (box3.max, box3.min);
+			var center = new THREE.Vector3();
+			center.addVectors(box3.max, box3.min).multiplyScalar (5);
+			
+			console.log ('center: ' + center.x + ', '+center.y + ', '+center.z );
+			console.log ('size: ' + size.x + ', ' +  size.y + ', '+size.z );
+			
+			// uniform scaling according to objSize
+			var objSize = Math.max (size.x, size.y, size.z);
+			var scaleSet = targetSize/objSize;
+						
+		    theObject1 =  new THREE.Object3D();
+			theObject1.add (object);
+			object.scale.set (scaleSet, scaleSet, scaleSet);
+			//object.rotation.z=Math.PI;
+			object.position.y=0.2;
+			object.rotation.y=Math.PI;
+
+			//object.position.set (-center.x*scaleSet, -center.y*scaleSet+5, -center.z*scaleSet);
+			return theObject1;
+					
+		}
+
+function animate() {
+	requestAnimationFrame (animate);
+	
+	if( arToolkitSource.ready === false )	return
+	arToolkitContext.update( arToolkitSource.domElement )
+    if(move)
+	theObject.rotation.y += 0.01;
+	renderer.render (scene, camera);
+	stats.update();
+	
+	// billboard of Hulk
+	// camera at eye coord: (0,0,0)
+	// corresponding marker coordinate:
+	let p0 = new THREE.Vector3 (0,0,0)
+	let mw = new THREE.Matrix4();		
+	p0.applyMatrix4 (mw.getInverse(markerHiro.matrixWorld));
+
+	p0.y = 0;
+	let front = new THREE.Vector3(0,0,1);
+	let angle = p0.angleTo (front);
+	let axis = new THREE.Vector3();
+	axis.crossVectors ( front, p0 ).normalize();
+	let hulkGroup = markerHiro.children[0];
+	if (axis.y > 0)  // 0, 1, 0
+		hulkGroup.rotation.y = angle;
+	else 
+		hulkGroup.rotation.y = -angle;
+			
+	let hulkMesh = hulkGroup.children[0]
+     
+	/*++counter;
+	if (counter % 50 === 0) {
+		_sign *= -1;
+	}
+	hulkMesh.position.x = 0.5 *_sign*/
+}
+
+</script></body>
